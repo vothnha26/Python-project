@@ -1,7 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import numpy as np
-
+#xu ly xung dot
 # Đường dẫn tương đối đến file data.csv
 file_path = Path(__file__).resolve().parent.parent / 'data' / 'data.csv'
 file_new_path = Path(__file__).resolve().parent. parent / 'data' / 'data_clean.csv'
