@@ -1,17 +1,20 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
-import pandas as pd
+from treeview_table import TreeViewTable
 from demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+
 
 def create_db():
     conn = sqlite3.connect('data_analyze.db')
     c = conn.cursor()
     c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)''')
-    c.execute('''CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY, username TEXT, amount REAL, description TEXT)''')
+    c.execute(
+        '''CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY, username TEXT, amount REAL, description TEXT)''')
     conn.commit()
     conn.close()
+
 
 def create_data_popup():
     popup = tk.Toplevel()
@@ -44,27 +47,35 @@ def create_data_popup():
         cases = cases_entry.get()
         deaths = deaths_entry.get()
         messagebox.showinfo("Thêm thành công ! ")
+
     # Nút lưu dữ liệu
 
     save_button = tk.Button(popup, text="Lưu", command=save_data, bg="#00796b", fg="white", font=("Helvetica", 12))
     save_button.pack(pady=10)
-    
+
+
 def create_data():
     messagebox.showinfo("Create", "Function to create data")
+
 
 def update_data():
     messagebox.showinfo("Update", "Function to update data")
 
+
 def delete_data():
     messagebox.showinfo("Delete", "Function to delete data")
+
 
 def sort_data():
     messagebox.showinfo("Sort", "Function to sort data")
 
+
 def search_data():
     messagebox.showinfo("Search", "Function to search data")
+
+
 class App:
-    def __init__(self, master,data_path = "Python-project/project/data/WHO-COVID-19-global-data.csv"):
+    def __init__(self, master, data_path="data.csv"):
         self.master = master
         master.title("Project")
         master.geometry("800x500")
@@ -77,7 +88,7 @@ class App:
 
         self.main_frame = tk.Frame(master, bg="#d1f0f7")
         self.main_frame.pack(expand=True, fill='both')
-       
+
         self.canvas = tk.Canvas(self.main_frame, bg="#ffffff", borderwidth=0, highlightthickness=0)
 
         self.button_frame = tk.Frame(self.canvas, bg="#ffffff")
@@ -107,7 +118,8 @@ class App:
                                         **button_options)
         self.create_button.pack(pady=5)
 
-        self.update_button = ttk.Button(self.button_frame, text="Cập nhật dữ liệu", command=update_data, **button_options)
+        self.update_button = ttk.Button(self.button_frame, text="Cập nhật dữ liệu", command=update_data,
+                                        **button_options)
         self.update_button.pack(pady=5)
 
         self.delete_button = ttk.Button(self.button_frame, text="Xóa dữ liệu", command=delete_data, **button_options)
@@ -119,7 +131,7 @@ class App:
         self.search_button = ttk.Button(self.button_frame, text="Tìm dữ liệu", command=search_data, **button_options)
         self.search_button.pack(pady=5)
 
-        self.chart_label = tk.Label(self.button_frame, text="Các biểu đồ thống kê", font=("Helvetica", 16, "bold"),
+        self.chart_label = tk.Label(self.button_frame, text="Bảng số liệu", font=("Helvetica", 16, "bold"),
                                     bg="#ffffff", fg="black")
         self.chart_label.pack(pady=20)
 
@@ -129,6 +141,10 @@ class App:
         self.display_label = tk.Label(self.display_frame, text="Khu vực hiển thị dữ liệu", font=("Helvetica", 12),
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
+
+        # Thêm TreeView
+        self.tvt = TreeViewTable(data_path, self.button_frame)
+        self.tvt.display_data(0)
 
         # Input và nút vẽ biểu đồ
         self.input_country = tk.Entry(self.display_frame, width=30)
@@ -143,12 +159,17 @@ class App:
         country = self.input_country.get()
         if country:
             for widget in self.display_frame.winfo_children():
-                if isinstance(widget, FigureCanvasTkAgg): # Chỉ xóa canvas của biểu đồ
+                if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
                     widget.get_tk_widget().destroy()
             # Vẽ biểu đồ dựa trên tên quốc gia được nhập
             ChartPlotter.plot_chart(self, self.display_frame, country)
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
+
+    def display_data(self):
+
+        pass
+
     def reset_chart(self):
         # Xóa tất cả các widget liên quan đến biểu đồ khỏi display_frame
         for widget in self.display_frame.winfo_children():
@@ -158,16 +179,16 @@ class App:
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
 
-
         self.input_country = tk.Entry(self.display_frame, width=30)
         self.input_country.pack(pady=5)
 
-        
         self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command=self.display_chart)
         self.plot_button.pack(pady=5)
-        
+
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
+
+
 if __name__ == "__main__":
     create_db()  # Tạo cơ sở dữ liệu và bảng nếu chưa tồn tại
     root = tk.Tk()

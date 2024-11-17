@@ -1,8 +1,10 @@
 import pandas as pd
 from typing import Dict
 import matplotlib.pyplot as plt
+
+
 class Country:
-    def __init__(self, who_region: str, country: str, country_code: str, report : pd.DataFrame):
+    def __init__(self, who_region: str, country: str, country_code: str, report: pd.DataFrame):
         """
         Lớp đại diện cho một quốc gia.
         """
@@ -23,6 +25,7 @@ class Country:
             "Cumulative_deaths": cumulative_deaths,
         }
         self.Report = pd.concat([self.Report, pd.DataFrame([new_data])], ignore_index=True)
+
     def get_total_cases(self) -> int:
         return self.report["Cumulative_cases"].iloc[-1] if not self.Report.empty else 0
 
@@ -31,6 +34,7 @@ class Country:
 
     def get_new_cases(self):
         return self.report["New_cases"] if "New_cases" in self.Report.columns else pd.Series()
+
 
 class Region:
     def __init__(self, who_region: str):
@@ -45,7 +49,7 @@ class Region:
         Thêm một quốc gia vào khu vực.
         """
         if country.Country not in self.Countries:
-            self.Countries[country.Country] = country # lấy tên quốc gia làm key
+            self.Countries[country.Country] = country  # lấy tên quốc gia làm key
 
 
 class DataAnalyzer:
@@ -54,7 +58,7 @@ class DataAnalyzer:
         Lớp quản lý dữ liệu từ file CSV.
         """
         self.file_path = file_path
-        self.data = None
+        self.data = pd.read_csv(self.file_path)
         self.countries: Dict[str, Country] = {}
         self.regions: Dict[str, Region] = {}
 
@@ -62,7 +66,6 @@ class DataAnalyzer:
         """
         Tải dữ liệu từ file CSV và tổ chức thành các đối tượng Country và Region.
         """
-        self.data = pd.read_csv(self.file_path)
 
         # Lặp qua từng dòng trong DataFrame
         for _, row in self.data.iterrows():
@@ -85,7 +88,8 @@ class DataAnalyzer:
             return self.countries[country_name]
 
         # Tạo mới quốc gia với report là DataFrame rỗng
-        country = Country(who_region, country_name, country_code, pd.DataFrame(columns=["Date_reported", "New_cases", "Cumulative_cases", "New_deaths", "Cumulative_deaths"]))
+        country = Country(who_region, country_name, country_code, pd.DataFrame(
+            columns=["Date_reported", "New_cases", "Cumulative_cases", "New_deaths", "Cumulative_deaths"]))
         self.countries[country_name] = country
 
         # Kiểm tra khu vực WHO
@@ -96,5 +100,3 @@ class DataAnalyzer:
         self.regions[who_region].add_country(country)
 
         return country
-    
-   
