@@ -1,8 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
 import sqlite3
-from treeview_table import TreeViewTable
-from demo_plot import ChartPlotter
+from modules.treeview_table import TreeViewTable
+from modules.demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 
@@ -75,7 +75,7 @@ def search_data():
 
 
 class App:
-    def __init__(self, master, data_path="data.csv"):
+    def __init__(self, master, data_path):
         self.master = master
         master.title("Project")
         master.geometry("800x500")
@@ -166,10 +166,6 @@ class App:
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
 
-    def display_data(self):
-
-        pass
-
     def reset_chart(self):
         # Xóa tất cả các widget liên quan đến biểu đồ khỏi display_frame
         for widget in self.display_frame.winfo_children():
@@ -187,10 +183,3 @@ class App:
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
-
-
-if __name__ == "__main__":
-    create_db()  # Tạo cơ sở dữ liệu và bảng nếu chưa tồn tại
-    root = tk.Tk()
-    app = App(root)
-    root.mainloop()
