@@ -1,77 +1,8 @@
 import tkinter as tk
 from tkinter import messagebox, ttk
-import sqlite3
-from modules.treeview_table import TreeViewTable
+from modules.treeview_table import TreeViewTable, TreeViewFilter
 from modules.demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
-
-def create_db():
-    conn = sqlite3.connect('data_analyze.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)''')
-    c.execute(
-        '''CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY, username TEXT, amount REAL, description TEXT)''')
-    conn.commit()
-    conn.close()
-
-
-def create_data_popup():
-    popup = tk.Toplevel()
-    popup.title("Thêm dữ liệu mới")
-    popup.geometry("300x250")
-    popup.configure(bg="#f0f0f0")
-
-    # Tiêu đề
-    title_label = tk.Label(popup, text="Nhập dữ liệu mới", font=("Helvetica", 14, "bold"), bg="#f0f0f0")
-    title_label.pack(pady=10)
-
-    country_label = tk.Label(popup, text="Tên nước:", bg="#f0f0f0")
-    country_label.pack(pady=5)
-    country_entry = tk.Entry(popup, width=30)
-    country_entry.pack(pady=5)
-
-    cases_label = tk.Label(popup, text="Số ca mắc mới:", bg="#f0f0f0")
-    cases_label.pack(pady=5)
-    cases_entry = tk.Entry(popup, width=30)
-    cases_entry.pack(pady=5)
-
-    deaths_label = tk.Label(popup, text="Số ca tử vong mới:", bg="#f0f0f0")
-    deaths_label.pack(pady=5)
-    deaths_entry = tk.Entry(popup, width=30)
-    deaths_entry.pack(pady=5)
-
-    # Hàm xử lý khi nhấn nút lưu
-    def save_data():
-        country = country_entry.get()
-        cases = cases_entry.get()
-        deaths = deaths_entry.get()
-        messagebox.showinfo("Thêm thành công ! ")
-
-    # Nút lưu dữ liệu
-
-    save_button = tk.Button(popup, text="Lưu", command=save_data, bg="#00796b", fg="white", font=("Helvetica", 12))
-    save_button.pack(pady=10)
-
-
-def create_data():
-    messagebox.showinfo("Create", "Function to create data")
-
-
-def update_data():
-    messagebox.showinfo("Update", "Function to update data")
-
-
-def delete_data():
-    messagebox.showinfo("Delete", "Function to delete data")
-
-
-def sort_data():
-    messagebox.showinfo("Sort", "Function to sort data")
-
-
-def search_data():
-    messagebox.showinfo("Search", "Function to search data")
 
 
 class App:
@@ -114,22 +45,28 @@ class App:
 
         button_options = {'style': "RoundedButton.TButton", 'width': 25, 'padding': 10}
 
-        self.create_button = ttk.Button(self.button_frame, text="Tạo dữ liệu mới", command=create_data_popup,
+        self.create_button = ttk.Button(self.button_frame, text="Tạo dữ liệu mới",
                                         **button_options)
         self.create_button.pack(pady=5)
 
-        self.update_button = ttk.Button(self.button_frame, text="Cập nhật dữ liệu", command=update_data,
+        self.update_button = ttk.Button(self.button_frame, text="Cập nhật dữ liệu",
                                         **button_options)
         self.update_button.pack(pady=5)
 
-        self.delete_button = ttk.Button(self.button_frame, text="Xóa dữ liệu", command=delete_data, **button_options)
+        self.delete_button = ttk.Button(self.button_frame, text="Xóa dữ liệu", **button_options)
         self.delete_button.pack(pady=5)
 
-        self.sort_button = ttk.Button(self.button_frame, text="Sắp xếp dữ liệu", command=sort_data, **button_options)
+        self.sort_button = ttk.Button(self.button_frame, text="Sắp xếp dữ liệu", command=self.display_sort_table,
+                                      **button_options)
+        self.sort_status = True
         self.sort_button.pack(pady=5)
 
-        self.search_button = ttk.Button(self.button_frame, text="Tìm dữ liệu", command=search_data, **button_options)
+        self.search_button = ttk.Button(self.button_frame, text="Tìm dữ liệu", **button_options)
         self.search_button.pack(pady=5)
+
+        self.filter_button = ttk.Button(self.button_frame, text="Lọc dữ liệu", command=self.display_filter_table,
+                                        **button_options)
+        self.filter_button.pack(pady=5)
 
         self.chart_label = tk.Label(self.button_frame, text="Bảng số liệu", font=("Helvetica", 16, "bold"),
                                     bg="#ffffff", fg="black")
@@ -142,9 +79,16 @@ class App:
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
 
-        # Thêm TreeView
-        self.tvt = TreeViewTable(data_path, self.button_frame)
-        self.tvt.display_data(0)
+        # TEST -----
+        self.treeview_table = TreeViewTable(self.button_frame)
+        self.treeview_table.display_treeview()
+        self.treeview_table.update_page_label()
+
+        self.b1 = tk.Button(self.button_frame, text="A", command=self.show_tree_view_all)
+        self.b1.place(x=20, y=20)
+        self.b2 = tk.Button(self.button_frame, text="B", command=self.show_tree_view_filter)
+        self.b2.place(x=20, y=40)
+        # --------
 
         # Input và nút vẽ biểu đồ
         self.input_country = tk.Entry(self.display_frame, width=30)
@@ -154,6 +98,96 @@ class App:
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
+
+        # Tạo combobox và sự kiện 'select' cho combobox
+        self.choice = ttk.Combobox(self.button_frame, width=27, state="readonly")
+        self.choice['values'] = ('WHO_region', 'Cumulative_cases')
+        self.choice.place(x=30, y=100)
+        self.choice.bind("<<ComboboxSelected>>", self.on_combobox_select)
+
+        # Từ điển lưu các trạng thái của Checkbutton
+        self.choices_map = {
+            "WHO_region": ["EURO", "OTHER", "EMRO"],
+            "Cumulative_cases": ["1000-2000", "2000-3000"]
+        }
+        self.checkbox_states = {}
+        self.check_vars = {}
+        self.check_buttons = {}
+
+    # Hiển thị toàn bộ dữ liệu TreeView
+    def show_tree_view_all(self):
+        # Thêm TreeView
+        self.treeview_table.clear_treeview()
+        self.treeview_table = TreeViewTable(self.button_frame)
+        self.treeview_table.display_treeview()
+        self.treeview_table.update_page_label()
+
+    # Hiển thị dữ liệu đã lọc theo ngày
+    def show_tree_view_filter(self):
+        # Thêm TreeView
+        self.treeview_table.clear_treeview()
+        self.treeview_table = TreeViewFilter(self.button_frame)
+        self.treeview_table.display_treeview()
+        self.treeview_table.update_page_label()
+
+    def remove_all_checkbuttons(self):
+        """Xóa tất cả Checkbutton hiện có."""
+        for key in list(self.check_buttons.keys()):
+            self.check_buttons[key].destroy()
+        self.checkbox_states.clear()
+        self.check_vars.clear()
+        self.check_buttons.clear()
+
+    def update_checkbuttons_based_on_choice(self):
+        """Tạo Checkbutton mới dựa trên danh sách options."""
+        self.remove_all_checkbuttons()
+        start_y = 126
+        spacing = 30
+
+        for i, option in enumerate(self.choices_map[self.choice.get()]):
+            var = tk.BooleanVar()
+            self.check_vars[option] = var
+
+            # Tạo Checkbutton
+            chk = tk.Checkbutton(self.button_frame, text=option, variable=var)
+            chk.place(x=30, y=start_y + i * spacing)
+            self.check_buttons[option] = chk
+        self.checkbox_states[self.choice.get()] = self.check_vars
+
+    def update_radiobuttons_based_on_choice(self):
+        """Tạo Checkbutton mới dựa trên danh sách options."""
+        self.remove_all_checkbuttons()
+        start_y = 126
+        spacing = 30
+
+        for i, option in enumerate(self.choices_map[self.choice.get()]):
+            var = tk.BooleanVar()
+            self.check_vars[option] = var
+
+            # Tạo Checkbutton
+            chk = tk.Radiobutton(self.button_frame, text=option, variable=var)
+            chk.place(x=30, y=start_y + i * spacing)
+            self.check_buttons[option] = chk
+        self.checkbox_states[self.choice.get()] = self.check_vars
+
+    def on_combobox_select(self, event):
+        """Xử lý sự kiện combobox."""
+        selected_value = self.choice.get()
+        if selected_value == "WHO_region":
+            self.update_checkbuttons_based_on_choice()
+        else:
+            self.update_radiobuttons_based_on_choice()
+
+    # Hiển thị bảng sau khi sắp xếp
+    def display_sort_table(self):
+        self.treeview_table.sort_all_data(self.sort_status)
+        self.sort_status = not self.sort_status
+
+    # Hiển thị bảng sau khi lọc dữ liệu
+    def display_filter_table(self):
+        selected_value = self.choice.get()
+        results = [option for option, var in self.checkbox_states[selected_value].items() if var.get() is True]
+        self.treeview_table.filter_tree(selected_value, results)
 
     def display_chart(self):
         country = self.input_country.get()
