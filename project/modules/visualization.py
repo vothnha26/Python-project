@@ -84,6 +84,11 @@ class App:
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
+        self.Crud_config=CRUD(data_path)
+        def create_command():
+            self.Crud_config.create_data_popup(self.treeview_table)
+        self.create_button.configure(command=create_command)
+        
         self.b1 = tk.Button(self.button_frame, text="A", command=self.show_tree_view_all)
         self.b1.place(x=20, y=20)
         self.b2 = tk.Button(self.button_frame, text="B", command=self.show_tree_view_filter)
