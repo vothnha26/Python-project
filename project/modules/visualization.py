@@ -3,6 +3,7 @@ from tkinter import messagebox, ttk
 from modules.treeview_table import TreeViewTable, TreeViewFilter
 from modules.demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+from modules.crud import CRUD
 
 
 class App:
