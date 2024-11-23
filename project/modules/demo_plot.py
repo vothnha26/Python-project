@@ -22,6 +22,11 @@ class ChartPlotter:
                 errors='coerce'
             )
 
+            country_demo=country.split()
+            for i in range(len(country_demo)):
+                country_demo[i]=country_demo[i].capitalize()
+            country=" ".join(country_demo)
+
             # Lọc dữ liệu theo quốc gia và loại bỏ các giá trị 0 trong `New_cases`
             filtered_df = df[df['Country'] == country]
             filtered_df = filtered_df[filtered_df['New_cases'] != 0]

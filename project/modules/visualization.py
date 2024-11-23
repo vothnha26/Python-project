@@ -4,6 +4,7 @@ from modules.treeview_table import TreeViewTable, TreeViewFilter
 from modules.demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from modules.crud import CRUD
+from tkcalendar import Calendar
 
 
 class App:
@@ -41,7 +42,7 @@ class App:
         style = ttk.Style()
         style.configure("RoundedButton.TButton", font=("Helvetica", 12), padding=10, relief="flat",
                         background="#00796b", foreground="black")
-        style.map("RoundedButton.TButton", background=[('active', '#005f4f')], foreground=[('active', '#ffffff')],
+        style.map("RoundedButton.TButton", background=[('active', 'red')], foreground=[('active', 'purple')],
                   relief=[('pressed', 'solid')])
 
         button_options = {'style': "RoundedButton.TButton", 'width': 25, 'padding': 10}
@@ -62,7 +63,8 @@ class App:
         self.sort_status = True
         self.sort_button.pack(pady=5)
 
-        self.search_button = ttk.Button(self.button_frame, text="Tìm dữ liệu", **button_options)
+        self.search_button = ttk.Button(self.button_frame, text="Tìm dữ liệu", **button_options,
+                                        command=self.display_search_table)
         self.search_button.pack(pady=5)
 
         self.filter_button = ttk.Button(self.button_frame, text="Lọc dữ liệu", command=self.display_filter_table,
@@ -80,21 +82,27 @@ class App:
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
 
-        # TEST -----
+        # TEST ------------------------------------------------
         self.treeview_table = TreeViewTable(self.button_frame)
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
-        self.Crud_config=CRUD(data_path)
+        self.Crud_config = CRUD(data_path)
+
         def create_command():
             self.Crud_config.create_data_popup(self.treeview_table)
+
         self.create_button.configure(command=create_command)
-        
+
         self.b1 = tk.Button(self.button_frame, text="A", command=self.show_tree_view_all)
         self.b1.place(x=20, y=20)
         self.b2 = tk.Button(self.button_frame, text="B", command=self.show_tree_view_filter)
         self.b2.place(x=20, y=40)
-        # --------
+
+        self.cal = Calendar(self.button_frame, selectmode="day", year=2020, month=1, day=5)
+        self.cal.bind("<<CalendarSelected>>", self.show_tree_view_filter)
+
+        # END TEST -----------------------------------------------
 
         # Input và nút vẽ biểu đồ
         self.input_country = tk.Entry(self.display_frame, width=30)
@@ -122,17 +130,29 @@ class App:
 
     # Hiển thị toàn bộ dữ liệu TreeView
     def show_tree_view_all(self):
-        # Thêm TreeView
+        # Ẩn calendar
+        self.cal.place_forget()
         self.treeview_table.clear_treeview()
+        # Thêm TreeView
         self.treeview_table = TreeViewTable(self.button_frame)
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
     # Hiển thị dữ liệu đã lọc theo ngày
-    def show_tree_view_filter(self):
+    def show_tree_view_filter(self, event=None):
+        self.cal.place(x=100, y=200)
         # Thêm TreeView
         self.treeview_table.clear_treeview()
-        self.treeview_table = TreeViewFilter(self.button_frame)
+
+        # Tách tháng, ngày, năm
+        month, day, year = map(str, self.cal.get_date().split("/"))
+        year = int(year)
+        # Chuẩn hóa năm (thêm 2000)
+        year += 2000 if year < 100 else 0
+        if len(month) == 1: month = '0' + month
+        if len(day) == 1: day = '0' + day
+
+        self.treeview_table = TreeViewFilter(self.button_frame, f"{year}-{month}-{day}")
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
@@ -188,6 +208,9 @@ class App:
     def display_sort_table(self):
         self.treeview_table.sort_all_data(self.sort_status)
         self.sort_status = not self.sort_status
+
+    def display_search_table(self):
+        self.treeview_table.create_search()
 
     # Hiển thị bảng sau khi lọc dữ liệu
     def display_filter_table(self):

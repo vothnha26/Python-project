@@ -11,10 +11,10 @@ class CRUD:
         self.data = DataAnalyzer(data_path)
         self.file_path = data_path
 
-    def create_data_popup(self, treeview_table):
+    def create_data_popup(self, treeview_table: TreeViewTable):
         popup = tk.Toplevel()
         popup.title("Thêm dữ liệu mới")
-        popup.geometry("300x250")
+        popup.geometry("300x400")
         popup.configure(bg="#f0f0f0")
 
         # Tiêu đề
@@ -118,9 +118,10 @@ class CRUD:
             # Lưu dữ liệu vào file
             try:
                 df.to_csv(self.file_path, index=False)
-                treeview_table.filter_data_tree.data = pd.concat([treeview_table.filter_data_tree.data, existing_data],
-                                                                 ignore_index=True)
-                treeview_table.display_data(0)
+                treeview_table.filter_data_tree = pd.concat([treeview_table.filter_data_tree, existing_data],
+                                                            ignore_index=True)
+                treeview_table.current_page = 0
+                treeview_table.display_treeview()
                 messagebox.showinfo("Thành công", "Thêm dữ liệu thành công!")
                 popup.destroy()
             except Exception as e:
@@ -130,4 +131,3 @@ class CRUD:
         save_button = tk.Button(popup, text="Lưu", command=save_data, bg="#00796b", fg="white", font=("Helvetica", 12))
         save_button.pack(pady=10)
     # def filter_data_popup(self):
-

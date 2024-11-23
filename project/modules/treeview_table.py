@@ -1,9 +1,11 @@
 import copy
 from tkinter import ttk
+import tkinter as tk
 from modules.ClassDesign import DataAnalyzer
 
-file_path = './data/data.csv'
+file_path = './data/data_clean.csv'
 ROWS_PER_PAGE = 1000
+MOD = 1003
 
 
 def convert_data(val):
@@ -61,6 +63,8 @@ class BaseTreeView:
         self.reset_button.place(x=470, y=680)
 
     def display_treeview(self):
+        self.update_total_pages()
+        self.update_page_label()
         """Hiển thị dữ liệu lên Treeview theo trang, bao gồm cột thứ tự."""
         self.tree.delete(*self.tree.get_children())  # Xóa dữ liệu cũ
         start = self.current_page * ROWS_PER_PAGE
@@ -77,11 +81,6 @@ class BaseTreeView:
         self.total_pages = len(self.filter_data_tree) // ROWS_PER_PAGE + (
             1 if len(self.filter_data_tree) % ROWS_PER_PAGE != 0 else 0)
 
-    def load_display(self):
-        self.update_total_pages()
-        self.update_page_label()
-        self.display_treeview()
-
     def sort_treeview_page(self, col, descending):
         """Sắp xếp dữ liệu trên bảng phân trang."""
         data = [(convert_data(self.tree.set(item, col)), item) for item in self.tree.get_children()]
@@ -96,7 +95,7 @@ class BaseTreeView:
                                                                   ascending=descending)
 
         self.current_page = 0
-        self.load_display()
+        self.display_treeview()
 
     def filter_tree(self, selected_value: str, option: list):
         """"Bộ lọc toàn bộ trang"""
@@ -109,27 +108,68 @@ class BaseTreeView:
         self.filter_data_tree = self.filter_data_tree[
             compare(self.filter_data_tree[selected_value], option)]
 
-        self.load_display()
+        self.display_treeview()
+
+    def create_search(self):
+        self.current_page = 0
+
+        popup = tk.Toplevel()
+        popup.title("Tìm kiếm")
+        popup.geometry("300x400")
+        popup.configure(bg="#f0f0f0")
+
+        # Tiêu đề
+        title_label = tk.Label(popup, text="Tìm kiếm", font=("Helvetica", 14, "bold"), bg="#f0f0f0")
+        title_label.pack(pady=10)
+        country_label = tk.Label(popup, text="Tên nước:", bg="#f0f0f0")
+        country_label.pack(pady=5)
+        country_entry = tk.Entry(popup, width=30)
+        country_entry.pack(pady=5)
+
+        # Nút lưu dữ liệu
+        find_button = tk.Button(popup, text="Tìm kiếm",
+                                command=lambda: self.search_country_tree(country_entry.get().strip()),
+                                bg="#00796b", fg="white", font=("Helvetica", 12))
+        find_button.pack(pady=10)
+
+    def search_country_tree(self, country_name: str):
+        """Tìm kiếm và hiển thị kết quả trong Treeview."""
+        self.current_page = 0
+
+        def country_matches(row):
+            n = len(row["Country"])
+            m = len(country_name)
+
+            for i in range(n - m + 1):
+                if row["Country"][i:i + m] == country_name:
+                    return True
+
+            return False
+
+        self.filter_data_tree = self.filter_data_tree[self.filter_data_tree.apply(country_matches, axis=1)]
+        self.display_treeview()
 
     def clear_treeview(self):
         """Hủy bỏ toàn bộ Treeview cũ và thanh cuộn."""
         # Xóa Treeview cũ
-        if hasattr(self, 'tree'):
-            self.tree.destroy()
+        self.tree.destroy()
 
         # Xóa thanh cuộn
-        if hasattr(self, 'v_scrollbar'):
-            self.v_scrollbar.destroy()
+        self.v_scrollbar.destroy()
+
+        # Xóa nhãn
+        self.page_label.destroy()
 
         # Xóa tham chiếu đối tượng
         del self.tree
         del self.v_scrollbar
+        del self.page_label
 
     def restore_data_root(self):
         """"Trả về dữ liệu ban đầu."""
         self.filter_data_tree = self.data_root
         self.current_page = 0
-        self.load_display()
+        self.display_treeview()
 
 
 class TreeViewTable(BaseTreeView):
@@ -147,19 +187,20 @@ class TreeViewTable(BaseTreeView):
         """Chuyển sang trang tiếp theo."""
         if self.current_page < self.total_pages - 1:
             self.current_page += 1
-            self.load_display()
+            self.display_treeview()
 
     def prev_page(self):
         """Chuyển về trang trước."""
         if self.current_page > 0:
             self.current_page -= 1
-            self.load_display()
+            self.display_treeview()
 
 
 class TreeViewFilter(BaseTreeView):
-    def __init__(self, frame):
+    def __init__(self, frame, date='2020-01-05'):
+        self.date = date
         super().__init__(frame, excluded_columns=['Date_reported', 'Country_code'],
                          filter_condition=self.filter_condition)
 
     def filter_condition(self, data):
-        return data['Date_reported'] == '2020-01-05'
+        return data['Date_reported'] == self.date
