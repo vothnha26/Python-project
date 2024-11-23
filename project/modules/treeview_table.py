@@ -182,6 +182,18 @@ class TreeViewTable(BaseTreeView):
 
         self.pre_button = ttk.Button(self.frame, text="Previous", command=self.prev_page)
         self.pre_button.place(x=0, y=427)
+    def delete_selected(self):
+        selected_item = self.tree.selection()  # Lấy item đang được chọn
+        if selected_item:
+            for item in selected_item:
+                # Xóa dòng dữ liệu trong filter_data_tree
+                row_index = int(self.tree.item(item, "values")[0]) - 1
+                self.filter_data_tree.drop(self.filter_data_tree.index[row_index], inplace=True)
+                self.tree.delete(item)  # Xóa item khỏi TreeView
+
+            # Cập nhật lại số trang và nhãn trang hiện tại sau khi xóa dữ liệu
+            self.update_total_pages()
+            self.update_page_label()
 
     def next_page(self):
         """Chuyển sang trang tiếp theo."""
@@ -195,6 +207,45 @@ class TreeViewTable(BaseTreeView):
             self.current_page -= 1
             self.display_treeview()
 
+    def save_updated_data(self, cases_entry, deaths_entry, date_entry, country, popup):
+        """Cập nhật dữ liệu vào CSV và TreeView."""
+        try:
+            new_cases = int(cases_entry.get().strip())
+            new_deaths = int(deaths_entry.get().strip())
+            date = pd.to_datetime(date_entry.get().strip())
+
+            # Cập nhật dữ liệu trong DataFrame
+            df = self.data_root
+            df.loc[(df['Country'] == country) & (df['Date_reported'] == date), 'New_cases'] = new_cases
+            df.loc[(df['Country'] == country) & (df['Date_reported'] == date), 'New_deaths'] = new_deaths
+
+            # Tính lại các giá trị tích lũy
+            country_df = df[df['Country'] == country].sort_values(by='Date_reported')
+            cumulative_cases = 0
+            cumulative_deaths = 0
+
+            for idx, row in country_df.iterrows():
+                cumulative_cases += row['New_cases']
+                cumulative_deaths += row['New_deaths']
+                df.loc[idx, 'Cumulative_cases'] = cumulative_cases
+                df.loc[idx, 'Cumulative_deaths'] = cumulative_deaths
+
+            # Lưu dữ liệu vào CSV
+            df.to_csv(file_path, index=False)
+
+            # Cập nhật lại filter_data_tree với dữ liệu mới
+            self.filter_data_tree = df  # Cập nhật dữ liệu trong filter_data_tree
+
+            # Cập nhật lại TreeView
+            self.display_treeview()  # Hiển thị lại TreeView với dữ liệu mới
+
+            messagebox.showinfo("Thành công", "Cập nhật dữ liệu thành công!")
+            popup.destroy()  # Đóng popup sau khi cập nhật thành công
+
+        except ValueError:
+            messagebox.showerror("Lỗi", "Vui lòng nhập số hợp lệ.")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể lưu dữ liệu: {e}")
 
 class TreeViewFilter(BaseTreeView):
     def __init__(self, frame, date='2020-01-05'):
