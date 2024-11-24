@@ -53,9 +53,13 @@ class CRUD:
                 return None, None
 
         def check_exist_date(country_name, date):
+            # Kiểm tra xem ngày đã tồn tại trong dữ liệu của quốc gia này hay chưa
             country_data = self.data.data[self.data.data['Country'] == country_name]
-            if not country_data.empty and date in country_data['Date_reported'].values:
-                return True
+            if not country_data.empty:
+                # Kiểm tra xem quốc gia và ngày có tồn tại không (so sánh với định dạng chuẩn)
+                country_data['Date_reported'] = pd.to_datetime(country_data['Date_reported']).dt.date
+                if date in country_data['Date_reported'].values:
+                    return True  # Ngày đã tồn tại trong quốc gia này
             return False
 
         def save_data():
@@ -78,8 +82,8 @@ class CRUD:
 
             # Kiểm tra ngày và quốc gia có tồn tại hay không
             if check_exist_date(country, date):
-                messagebox.showinfo("Lỗi", "Ngày này đã tồn tại hoặc nước không tồn tại!")
-                return
+                messagebox.showinfo("Lỗi", "Ngày này đã tồn tại trong dữ liệu của quốc gia này!")
+                return  # Thoát ra mà không thêm dữ liệu
 
             # Lấy WHO_region và Country_code
             who_region, country_code = get_who_region_and_country_code(country)
@@ -114,13 +118,15 @@ class CRUD:
                 df.loc[idx, 'Cumulative_cases'] = cumulative_cases
                 df.loc[idx, 'Cumulative_deaths'] = cumulative_deaths
 
+            # Cập nhật lại dữ liệu sau khi tính giá trị tích lũy
             existing_data = df.loc[df['Date_reported'] == pd.to_datetime(date)]
             existing_data['Date_reported'] = existing_data['Date_reported'].dt.strftime('%Y-%m-%d')
+
             # Lưu dữ liệu vào file
             try:
                 df.to_csv(self.file_path, index=False)
                 treeview_table.filter_data_tree = pd.concat([treeview_table.filter_data_tree, existing_data],
-                                                                 ignore_index=True)
+                                                            ignore_index=True)
                 treeview_table.display_treeview()
                 messagebox.showinfo("Thành công", "Thêm dữ liệu thành công!")
                 popup.destroy()
