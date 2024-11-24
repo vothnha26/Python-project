@@ -1,3 +1,4 @@
+from functools import update_wrapper
 import pandas as pd
 import tkinter as tk
 from tkinter import messagebox
@@ -14,7 +15,7 @@ class CRUD:
     def create_data_popup(self, treeview_table):
         popup = tk.Toplevel()
         popup.title("Thêm dữ liệu mới")
-        popup.geometry("300x250")
+        popup.geometry("300x400")
         popup.configure(bg="#f0f0f0")
 
         # Tiêu đề
@@ -114,13 +115,13 @@ class CRUD:
                 df.loc[idx, 'Cumulative_deaths'] = cumulative_deaths
 
             existing_data = df.loc[df['Date_reported'] == pd.to_datetime(date)]
-
+            existing_data['Date_reported'] = existing_data['Date_reported'].dt.strftime('%Y-%m-%d')
             # Lưu dữ liệu vào file
             try:
                 df.to_csv(self.file_path, index=False)
-                treeview_table.filter_data_tree.data = pd.concat([treeview_table.filter_data_tree.data, existing_data],
+                treeview_table.filter_data_tree = pd.concat([treeview_table.filter_data_tree, existing_data],
                                                                  ignore_index=True)
-                treeview_table.display_data(0)
+                treeview_table.display_treeview()
                 messagebox.showinfo("Thành công", "Thêm dữ liệu thành công!")
                 popup.destroy()
             except Exception as e:
@@ -129,5 +130,103 @@ class CRUD:
         # Nút lưu dữ liệu
         save_button = tk.Button(popup, text="Lưu", command=save_data, bg="#00796b", fg="white", font=("Helvetica", 12))
         save_button.pack(pady=10)
-    # def filter_data_popup(self):
+
+    def update_data_popup(self, treeview_table):
+        """Tạo popup để cập nhật dữ liệu được chọn."""
+        selected_item = treeview_table.tree.selection()
+        if not selected_item:
+            messagebox.showinfo("Thông báo", "Vui lòng chọn một hàng để cập nhật.")
+            return
+
+        # Lấy dữ liệu từ hàng được chọn
+        item_data = treeview_table.tree.item(selected_item[0])
+        row_values = item_data['values']
+        no, date_reported, country_code, country, who_region, new_cases, cumulative_cases, new_deaths, cumulative_deaths = row_values
+
+        popup = tk.Toplevel()
+        popup.title("Cập nhật dữ liệu")
+        popup.geometry("300x400")
+        popup.configure(bg="#f0f0f0")
+
+        # Tạo các ô nhập liệu với giá trị hiện tại
+        labels_entries = [
+            ("Ngày báo cáo:", date_reported),
+            ("Tên nước:", country),
+            ("Số ca mắc mới:", new_cases),
+            ("Số ca tử vong mới:", new_deaths),
+        ]
+        entries = []
+        for label_text, default_value in labels_entries:
+            tk.Label(popup, text=label_text, bg="#f0f0f0").pack(pady=5)
+            entry = tk.Entry(popup, width=30)
+            entry.insert(0, default_value)
+            entry.pack(pady=5)
+            entries.append(entry)
+
+        date_entry, country_entry, cases_entry, deaths_entry = entries
+
+        # Nút Lưu
+        def update_command():
+            treeview_table.save_updated_data(no, cases_entry, deaths_entry, date_entry, country, popup, country_code,who_region)
+
+        save_button = tk.Button(popup, text="Lưu", command=update_command, bg="#00796b", fg="white", font=("Helvetica", 12) )
+        save_button.pack(pady=10)
+
+    def delete_multiple_data(self, treeview_table):
+        # Lấy tất cả các hàng đã chọn trong TreeView
+        selected_items = treeview_table.tree.selection()
+        if not selected_items:
+            messagebox.showinfo("Thông báo", "Vui lòng chọn ít nhất một hàng để xóa.")
+            return
+
+        # Xác nhận xóa nhiều hàng
+        confirm = messagebox.askyesno("Xác nhận",
+                                      f"Bạn có chắc chắn muốn xóa {len(selected_items)} hàng đã chọn?")
+        if not confirm:
+            return
+
+        # Lấy dữ liệu của các hàng đã chọn
+        rows_to_delete = []
+        for selected_item in selected_items:
+            item_data = treeview_table.tree.item(selected_item)
+            row_values = item_data['values']
+            date_reported, country_code, country, who_region, new_cases, cumulative_cases, new_deaths, cumulative_deaths = row_values[
+                                                                                                                           1:9]
+            rows_to_delete.append((date_reported, country))
+
+        # Chuyển đổi ngày báo cáo về dạng datetime và tìm các hàng cần xóa trong DataFrame
+        df = self.data.data
+        for date_reported, country in rows_to_delete:
+            date_reported = pd.to_datetime(date_reported)
+            df = df[~((df['Date_reported'] == date_reported) & (df['Country'] == country))]
+
+        # Cập nhật lại các giá trị tích lũy cho các quốc gia sau khi xóa
+        for country in df['Country'].unique():
+            country_df = df[df['Country'] == country].sort_values(by='Date_reported')
+            cumulative_cases = 0
+            cumulative_deaths = 0
+            for idx, row in country_df.iterrows():
+                cumulative_cases += row['New_cases']
+                cumulative_deaths += row['New_deaths']
+                df.at[idx, 'Cumulative_cases'] = cumulative_cases
+                df.at[idx, 'Cumulative_deaths'] = cumulative_deaths
+
+        # Lưu dữ liệu vào CSV
+        try:
+            df.to_csv(self.file_path, index=False)
+            self.data.data = df  # Cập nhật dữ liệu trong DataAnalyzer
+
+            # Xóa các hàng trong TreeView
+            treeview_table.delete_selected()
+
+            # Cập nhật lại TreeView với dữ liệu mới
+            treeview_table.display_treeview()
+
+            messagebox.showinfo("Thành công", "Đã xóa các dữ liệu thành công!")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Không thể lưu dữ liệu: {e}")
+
+
+
+
 
