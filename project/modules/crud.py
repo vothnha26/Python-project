@@ -218,7 +218,7 @@ class CRUD:
             df = df[~((df['Date_reported'] == date_reported) & (df['Country'] == country))]
 
         # Cập nhật lại các giá trị tích lũy cho các quốc gia sau khi xóa
-        for country in df['Country'].unique():
+        for date_reported, country in rows_to_delete:
             country_df = df[df['Country'] == country].sort_values(by='Date_reported')
             cumulative_cases = 0
             cumulative_deaths = 0
