@@ -219,7 +219,7 @@ class TreeViewTable(BaseTreeView):
             # Lấy thông tin từ giao diện người dùng
             new_cases = int(cases_entry.get().strip())
             new_deaths = int(deaths_entry.get().strip())
-            date = pd.to_datetime(date_entry.get().strip()).strftime('%Y-%m-%d')  # Chuyển đổi ngày sang định dạng chuẩn
+            date = pd.to_datetime(date_entry.get().strip()).strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày (YYYY-MM-DD)
 
             # Kiểm tra nếu DataFrame rỗng
             if self.filter_data_tree.empty:
@@ -235,12 +235,15 @@ class TreeViewTable(BaseTreeView):
                 return
 
             # Cập nhật dữ liệu mới
-            df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
-            df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_deaths'] = new_deaths
+            df.loc[
+                (df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
+            df.loc[(df['Country'].str.strip() == country.strip()) & (
+                        df['Date_reported'] == date), 'New_deaths'] = new_deaths
 
             # Sắp xếp dữ liệu theo ngày và tính lại các giá trị tích lũy
-            df['Date_reported'] = pd.to_datetime(df['Date_reported'])
+            df['Date_reported'] = pd.to_datetime(df['Date_reported']).dt.strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày
             country_df = df[df['Country'] == country].sort_values(by='Date_reported')
+
             cumulative_cases = 0
             cumulative_deaths = 0
 
@@ -251,7 +254,7 @@ class TreeViewTable(BaseTreeView):
                 df.loc[idx, 'Cumulative_deaths'] = cumulative_deaths
 
             # Lấy tổng số ca và tử vong tích lũy tại ngày được cập nhật
-            updated_row = df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == pd.to_datetime(date))]
+            updated_row = df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date)]
             TotalOfCase = updated_row['Cumulative_cases'].iloc[0]
             TotalOfDeath = updated_row['Cumulative_deaths'].iloc[0]
 
@@ -260,7 +263,8 @@ class TreeViewTable(BaseTreeView):
 
             # Cập nhật lại TreeView mà không xóa
             selected_item = self.tree.selection()[0]  # Lấy item đang được chọn
-            updated_row = ( no, date, country_code, country, who_region, new_cases, TotalOfCase, new_deaths, TotalOfDeath)
+            updated_row = (
+            no, date, country_code, country, who_region, new_cases, TotalOfCase, new_deaths, TotalOfDeath)
             self.tree.item(selected_item, values=updated_row)  # Cập nhật số liệu mới cho hàng hiện tại
 
             # Cập nhật DataFrame nội bộ
