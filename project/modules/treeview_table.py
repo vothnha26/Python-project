@@ -1,12 +1,10 @@
 import copy
 from tkinter import ttk, messagebox
-import tkinter as tk
 from modules.ClassDesign import DataAnalyzer
 import pandas as pd
 
 file_path = './data/data_clean.csv'
 ROWS_PER_PAGE = 1000
-MOD = 1003
 
 
 def convert_data(val):
@@ -103,42 +101,42 @@ class BaseTreeView:
         self.current_page = 0
         self.display_treeview()
 
-    def filter_tree(self, selected_value: str, option: list):
+    def filter_tree(self, filter_area: dict, filter_year: dict):
+        self.current_page = 0
+        # Khởi tạo các danh sách khu vực và thời gian đã được tick tại checkbutton
+        option_area = []
+        option_year = []
+        for area, var in filter_area.items():
+            if var.get() is True:
+                option_area.append(area)
+
+        for year, var in filter_year.items():
+            if var.get() is True:
+                option_year.append(year)
+
+        if len(option_area) == 0 and len(option_year) == 0:
+            return
+
+        if len(option_year) == 0:
+            option_year = ['2020', '2021', '2022', '2023', '2024']
         """"Bộ lọc toàn bộ trang"""
         self.current_page = 0
-        if selected_value == "WHO_region":
-            compare = lambda x, y: x.isin(y)
-        else:
-            compare = lambda x, y: x > 100 and y < 1000
+        compare = lambda x, y: x.isin(y)
 
-        self.filter_data_tree = self.filter_data_tree[
-            compare(self.filter_data_tree[selected_value], option)]
+        # Kiểm tra self đang thuộc lớp nào để thực hiện điều kiện so sánh thích hợp
+        if isinstance(self, TreeViewTable):
+            self.filter_data_tree = self.filter_data_tree[
+                compare(self.filter_data_tree["WHO_region"], option_area) & compare(
+                    self.filter_data_tree["Date_reported"].str[:4],
+                    option_year)]
+        else:
+            self.filter_data_tree = self.filter_data_tree[
+                compare(self.filter_data_tree["WHO_region"], option_area)]
 
         self.display_treeview()
 
-    def create_search(self):
+    def search_country_tree(self, country_name: str, date: str):
         self.current_page = 0
-
-        popup = tk.Toplevel()
-        popup.title("Tìm kiếm")
-        popup.geometry("300x400")
-        popup.configure(bg="#f0f0f0")
-
-        # Tiêu đề
-        title_label = tk.Label(popup, text="Tìm kiếm", font=("Helvetica", 14, "bold"), bg="#f0f0f0")
-        title_label.pack(pady=10)
-        country_label = tk.Label(popup, text="Tên nước:", bg="#f0f0f0")
-        country_label.pack(pady=5)
-        country_entry = tk.Entry(popup, width=30)
-        country_entry.pack(pady=5)
-
-        # Nút lưu dữ liệu
-        find_button = tk.Button(popup, text="Tìm kiếm",
-                                command=lambda: self.search_country_tree(country_entry.get().strip()),
-                                bg="#00796b", fg="white", font=("Helvetica", 12))
-        find_button.pack(pady=10)
-
-    def search_country_tree(self, country_name: str):
         """Tìm kiếm và hiển thị kết quả trong Treeview."""
         self.current_page = 0
 
@@ -153,6 +151,8 @@ class BaseTreeView:
             return False
 
         self.filter_data_tree = self.filter_data_tree[self.filter_data_tree.apply(country_matches, axis=1)]
+        if date != '':
+            self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
         self.display_treeview()
 
     def clear_treeview(self):
@@ -162,20 +162,22 @@ class BaseTreeView:
 
         # Xóa thanh cuộn
         self.v_scrollbar.destroy()
+        self.h_scrollbar.destroy()
 
         # Xóa nhãn
         self.page_label.destroy()
-
-        # Xóa tham chiếu đối tượng
-        del self.tree
-        del self.v_scrollbar
-        del self.page_label
 
     def restore_data_root(self):
         """"Trả về dữ liệu ban đầu."""
         self.filter_data_tree = self.data_root
         self.current_page = 0
         self.display_treeview()
+
+    def delete_selected(self):
+        pass
+
+    def save_updated_data(self):
+        pass
 
 
 class TreeViewTable(BaseTreeView):
@@ -188,6 +190,19 @@ class TreeViewTable(BaseTreeView):
 
         self.pre_button = ttk.Button(self.frame, text="Previous", command=self.prev_page)
         self.pre_button.place(x=0, y=427)
+
+    def prev_page(self):
+        """Chuyển về trang trước."""
+        if self.current_page > 0:
+            self.current_page -= 1
+            self.display_treeview()
+
+    def next_page(self):
+        """Chuyển sang trang tiếp theo."""
+        if self.current_page < self.total_pages - 1:
+            self.current_page += 1
+            self.display_treeview()
+
     def delete_selected(self):
         selected_item = self.tree.selection()  # Lấy item đang được chọn
         if selected_item:
@@ -201,19 +216,8 @@ class TreeViewTable(BaseTreeView):
             self.update_total_pages()
             self.update_page_label()
 
-    def next_page(self):
-        """Chuyển sang trang tiếp theo."""
-        if self.current_page < self.total_pages - 1:
-            self.current_page += 1
-            self.display_treeview()
-
-    def prev_page(self):
-        """Chuyển về trang trước."""
-        if self.current_page > 0:
-            self.current_page -= 1
-            self.display_treeview()
-
-    def save_updated_data(self, no, cases_entry, deaths_entry, date_entry, country, popup, country_code, who_region):
+    def save_updated_data(self, no=None, cases_entry=None, deaths_entry=None, date_entry=None, country=None, popup=None,
+                          country_code=None, who_region=None):
         """Cập nhật dữ liệu vào CSV và TreeView."""
         try:
             # Lấy thông tin từ giao diện người dùng
@@ -238,7 +242,7 @@ class TreeViewTable(BaseTreeView):
             df.loc[
                 (df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
             df.loc[(df['Country'].str.strip() == country.strip()) & (
-                        df['Date_reported'] == date), 'New_deaths'] = new_deaths
+                    df['Date_reported'] == date), 'New_deaths'] = new_deaths
 
             # Sắp xếp dữ liệu theo ngày và tính lại các giá trị tích lũy
             df['Date_reported'] = pd.to_datetime(df['Date_reported']).dt.strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày
@@ -255,8 +259,8 @@ class TreeViewTable(BaseTreeView):
 
             # Lấy tổng số ca và tử vong tích lũy tại ngày được cập nhật
             updated_row = df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date)]
-            TotalOfCase = updated_row['Cumulative_cases'].iloc[0]
-            TotalOfDeath = updated_row['Cumulative_deaths'].iloc[0]
+            total_of_case = updated_row['Cumulative_cases'].iloc[0]
+            total_of_death = updated_row['Cumulative_deaths'].iloc[0]
 
             # Lưu dữ liệu vào CSV
             df.to_csv(file_path, index=False)
@@ -264,7 +268,7 @@ class TreeViewTable(BaseTreeView):
             # Cập nhật lại TreeView mà không xóa
             selected_item = self.tree.selection()[0]  # Lấy item đang được chọn
             updated_row = (
-            no, date, country_code, country, who_region, new_cases, TotalOfCase, new_deaths, TotalOfDeath)
+                no, date, country_code, country, who_region, new_cases, total_of_case, new_deaths, total_of_death)
             self.tree.item(selected_item, values=updated_row)  # Cập nhật số liệu mới cho hàng hiện tại
 
             # Cập nhật DataFrame nội bộ

@@ -1,9 +1,12 @@
 import tkinter as tk
+from calendar import Calendar
 from tkinter import messagebox, ttk
+from tkinter import *
 from modules.treeview_table import TreeViewTable, TreeViewFilter
 from modules.demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from modules.crud import CRUD
+from tkcalendar import Calendar
 
 
 class App:
@@ -86,23 +89,59 @@ class App:
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
-        self.Crud_config=CRUD(data_path)
+        def search_command():
+            popup = tk.Toplevel()
+            popup.title("Tìm kiếm")
+            popup.geometry("300x400")
+            popup.configure(bg="#f0f0f0")
+
+            # Tiêu đề
+            title_label = tk.Label(popup, text="Tìm kiếm", font=("Helvetica", 14, "bold"), bg="#f0f0f0")
+            title_label.pack(pady=10)
+
+            date_label = tk.Label(popup, text="Ngày tháng năm (YY-MM-DD):", bg="#f0f0f0")
+            date_label.pack(pady=5)
+            date_entry = tk.Entry(popup, width=30)
+            date_entry.pack(pady=5)
+
+            country_label = tk.Label(popup, text="Tên nước:", bg="#f0f0f0")
+            country_label.pack(pady=5)
+            country_entry = tk.Entry(popup, width=30)
+            country_entry.pack(pady=5)
+
+            # Nút lưu dữ liệu
+            find_button = tk.Button(popup, text="Tìm kiếm",
+                                    command=lambda: self.treeview_table.search_country_tree(country_entry.get().strip(),
+                                                                                            date_entry.get().strip()),
+                                    bg="#00796b", fg="white", font=("Helvetica", 12))
+            find_button.pack(pady=10)
+
+        self.search_button.configure(command=search_command)
+
+        self.Crud_config = CRUD(data_path)
+
         def create_command():
             self.Crud_config.create_data_popup(self.treeview_table)
+
         self.create_button.configure(command=create_command)
 
         def update_command():
             self.Crud_config.update_data_popup(self.treeview_table)
+
         self.update_button.configure(command=update_command)
 
         def delete_command():
             self.Crud_config.delete_multiple_data(self.treeview_table)
+
         self.delete_button.configure(command=delete_command)
 
-        self.b1 = tk.Button(self.button_frame, text="A", command=self.show_tree_view_all)
+        self.b1 = tk.Button(self.button_frame, text="Dữ liệu tệp", command=self.show_tree_view_all)
         self.b1.place(x=20, y=20)
-        self.b2 = tk.Button(self.button_frame, text="B", command=self.show_tree_view_filter)
+        self.b2 = tk.Button(self.button_frame, text="Dữ liệu theo ngày", command=self.show_tree_view_filter)
         self.b2.place(x=20, y=40)
+
+        self.cal = Calendar(self.display_frame, selectmode="day", year=2020, month=1, day=5)
+        self.cal.bind("<<CalendarSelected>>", self.show_tree_view_filter)
         # --------
 
         # Input và nút vẽ biểu đồ
@@ -114,23 +153,10 @@ class App:
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
 
-        # Tạo combobox và sự kiện 'select' cho combobox
-        self.choice = ttk.Combobox(self.button_frame, width=27, state="readonly")
-        self.choice['values'] = ('WHO_region', 'Cumulative_cases')
-        self.choice.place(x=30, y=100)
-        self.choice.bind("<<ComboboxSelected>>", self.on_combobox_select)
-
-        # Từ điển lưu các trạng thái của Checkbutton
-        self.choices_map = {
-            "WHO_region": ["EURO", "OTHER", "EMRO"],
-            "Cumulative_cases": ["1000-2000", "2000-3000"]
-        }
-        self.checkbox_states = {}
-        self.check_vars = {}
-        self.check_buttons = {}
-
     # Hiển thị toàn bộ dữ liệu TreeView
     def show_tree_view_all(self):
+        self.cal.place_forget()
+        self.treeview_table.clear_treeview()
         # Thêm TreeView
         self.treeview_table.clear_treeview()
         self.treeview_table = TreeViewTable(self.button_frame)
@@ -138,60 +164,24 @@ class App:
         self.treeview_table.update_page_label()
 
     # Hiển thị dữ liệu đã lọc theo ngày
-    def show_tree_view_filter(self):
+    def show_tree_view_filter(self, event=None):
+        self.treeview_table.clear_treeview()
+
+        self.cal.place(x=0, y=0)
         # Thêm TreeView
         self.treeview_table.clear_treeview()
-        self.treeview_table = TreeViewFilter(self.button_frame)
+
+        # Tách tháng, ngày, năm
+        month, day, year = map(str, self.cal.get_date().split("/"))
+        year = int(year)
+        # Chuẩn hóa năm (thêm 2000)
+        year += 2000 if year < 100 else 0
+        if len(month) == 1: month = '0' + month
+        if len(day) == 1: day = '0' + day
+
+        self.treeview_table = TreeViewFilter(self.button_frame, f"{year}-{month}-{day}")
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
-
-    def remove_all_checkbuttons(self):
-        """Xóa tất cả Checkbutton hiện có."""
-        for key in list(self.check_buttons.keys()):
-            self.check_buttons[key].destroy()
-        self.checkbox_states.clear()
-        self.check_vars.clear()
-        self.check_buttons.clear()
-
-    def update_checkbuttons_based_on_choice(self):
-        """Tạo Checkbutton mới dựa trên danh sách options."""
-        self.remove_all_checkbuttons()
-        start_y = 126
-        spacing = 30
-
-        for i, option in enumerate(self.choices_map[self.choice.get()]):
-            var = tk.BooleanVar()
-            self.check_vars[option] = var
-
-            # Tạo Checkbutton
-            chk = tk.Checkbutton(self.button_frame, text=option, variable=var)
-            chk.place(x=30, y=start_y + i * spacing)
-            self.check_buttons[option] = chk
-        self.checkbox_states[self.choice.get()] = self.check_vars
-
-    def update_radiobuttons_based_on_choice(self):
-        """Tạo Checkbutton mới dựa trên danh sách options."""
-        self.remove_all_checkbuttons()
-        start_y = 126
-        spacing = 30
-
-        for i, option in enumerate(self.choices_map[self.choice.get()]):
-            var = tk.BooleanVar()
-            self.check_vars[option] = var
-
-            # Tạo Checkbutton
-            chk = tk.Radiobutton(self.button_frame, text=option, variable=var)
-            chk.place(x=30, y=start_y + i * spacing)
-            self.check_buttons[option] = chk
-        self.checkbox_states[self.choice.get()] = self.check_vars
-
-    def on_combobox_select(self, event):
-        """Xử lý sự kiện combobox."""
-        selected_value = self.choice.get()
-        if selected_value == "WHO_region":
-            self.update_checkbuttons_based_on_choice()
-        else:
-            self.update_radiobuttons_based_on_choice()
 
     # Hiển thị bảng sau khi sắp xếp
     def display_sort_table(self):
@@ -200,16 +190,45 @@ class App:
 
     # Hiển thị bảng sau khi lọc dữ liệu
     def display_filter_table(self):
-        selected_value = self.choice.get()
-        results = [option for option, var in self.checkbox_states[selected_value].items() if var.get() is True]
-        self.treeview_table.filter_tree(selected_value, results)
+
+        popup = tk.Toplevel()
+        popup.title("Lọc dữ liệu")
+
+        # Tiêu đề
+        options_area = ['AMRO', 'WPRO', 'EURO', 'SEARO', 'AFRO', 'EMRO', 'OTHER']
+        options_year = ['2020', '2021', '2022', '2023', '2024']
+
+        Label(popup, text="Khu vực", bg="#00796b", fg="white", font=("Helvetica", 16)).grid(row=0, columnspan=7)
+
+        # Danh sách lưu trạng thái của các checkbutton
+        filter_area = {}
+        filter_year = {}
+
+        for i, option in enumerate(options_area):
+            var = tk.BooleanVar()
+            Checkbutton(popup, text=option, variable=var).grid(row=1, column=i)
+            filter_area[option] = var
+
+        if isinstance(self.treeview_table, TreeViewTable):
+            Label(popup, text="Năm", bg="#00796b", fg="white", font=("Helvetica", 16)).grid(row=2, columnspan=7)
+
+            for i, option in enumerate(options_year):
+                var = tk.BooleanVar()
+                Checkbutton(popup, text=option, variable=var).grid(row=3, column=i + 1)
+                filter_year[option] = var
+
+        # Nút lọc dữ liệu
+        filter_button = tk.Button(popup, text="Lọc dữ liệu",
+                                  command=lambda: self.treeview_table.filter_tree(filter_area, filter_year),
+                                  bg="#00796b", fg="white", font=("Helvetica", 12))
+        filter_button.grid(row=4, columnspan=7, pady=10)
 
     def display_chart(self):
         country = self.input_country.get()
-        a=country.split()
+        a = country.split()
         for i in range(len(a)):
-            a[i]=a[i].capitalize()
-        country=" ".join(a)
+            a[i] = a[i].capitalize()
+        country = " ".join(a)
         if country:
             for widget in self.display_frame.winfo_children():
                 if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ

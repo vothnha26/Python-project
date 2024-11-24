@@ -4,7 +4,7 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 from modules.ClassDesign import DataAnalyzer
-from modules.treeview_table import TreeViewTable
+from modules.treeview_table import TreeViewTable, TreeViewFilter
 
 
 class CRUD:
@@ -13,6 +13,9 @@ class CRUD:
         self.file_path = data_path
 
     def create_data_popup(self, treeview_table):
+        if isinstance(treeview_table, TreeViewFilter):
+            return
+
         popup = tk.Toplevel()
         popup.title("Thêm dữ liệu mới")
         popup.geometry("300x400")
@@ -138,6 +141,9 @@ class CRUD:
         save_button.pack(pady=10)
 
     def update_data_popup(self, treeview_table):
+        if isinstance(treeview_table, TreeViewFilter):
+            return
+
         """Tạo popup để cập nhật dữ liệu được chọn."""
         selected_item = treeview_table.tree.selection()
         if not selected_item:
@@ -173,12 +179,17 @@ class CRUD:
 
         # Nút Lưu
         def update_command():
-            treeview_table.save_updated_data(no, cases_entry, deaths_entry, date_entry, country, popup, country_code,who_region)
+            treeview_table.save_updated_data(no, cases_entry, deaths_entry, date_entry, country, popup, country_code,
+                                             who_region)
 
-        save_button = tk.Button(popup, text="Lưu", command=update_command, bg="#00796b", fg="white", font=("Helvetica", 12) )
+        save_button = tk.Button(popup, text="Lưu", command=update_command, bg="#00796b", fg="white",
+                                font=("Helvetica", 12))
         save_button.pack(pady=10)
 
     def delete_multiple_data(self, treeview_table):
+        if isinstance(treeview_table, TreeViewFilter):
+            return
+
         # Lấy tất cả các hàng đã chọn trong TreeView
         selected_items = treeview_table.tree.selection()
         if not selected_items:
@@ -231,8 +242,3 @@ class CRUD:
             messagebox.showinfo("Thành công", "Đã xóa các dữ liệu thành công!")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Không thể lưu dữ liệu: {e}")
-
-
-
-
-
