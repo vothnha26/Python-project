@@ -1,5 +1,4 @@
 from functools import update_wrapper
-
 import pandas as pd
 import tkinter as tk
 from tkinter import messagebox
@@ -133,51 +132,44 @@ class CRUD:
         save_button.pack(pady=10)
 
     def update_data_popup(self, treeview_table):
+        """Tạo popup để cập nhật dữ liệu được chọn."""
         selected_item = treeview_table.tree.selection()
         if not selected_item:
             messagebox.showinfo("Thông báo", "Vui lòng chọn một hàng để cập nhật.")
             return
 
-        item_data = treeview_table.tree.item(selected_item)
+        # Lấy dữ liệu từ hàng được chọn
+        item_data = treeview_table.tree.item(selected_item[0])
         row_values = item_data['values']
-        date_reported, country_code, country, who_region, new_cases, cumulative_cases, new_deaths, cumulative_deaths = row_values[
-                                                                                                                       1:9]
+        no, date_reported, country_code, country, who_region, new_cases, cumulative_cases, new_deaths, cumulative_deaths = row_values
 
         popup = tk.Toplevel()
         popup.title("Cập nhật dữ liệu")
         popup.geometry("300x400")
         popup.configure(bg="#f0f0f0")
 
-        # Tạo các ô nhập dữ liệu với giá trị hiện tại
-        date_label = tk.Label(popup, text="Ngày báo cáo:", bg="#f0f0f0")
-        date_label.pack(pady=5)
-        date_entry = tk.Entry(popup, width=30)
-        date_entry.insert(0, date_reported)
-        date_entry.pack(pady=5)
+        # Tạo các ô nhập liệu với giá trị hiện tại
+        labels_entries = [
+            ("Ngày báo cáo:", date_reported),
+            ("Tên nước:", country),
+            ("Số ca mắc mới:", new_cases),
+            ("Số ca tử vong mới:", new_deaths),
+        ]
+        entries = []
+        for label_text, default_value in labels_entries:
+            tk.Label(popup, text=label_text, bg="#f0f0f0").pack(pady=5)
+            entry = tk.Entry(popup, width=30)
+            entry.insert(0, default_value)
+            entry.pack(pady=5)
+            entries.append(entry)
 
-        country_label = tk.Label(popup, text="Tên nước:", bg="#f0f0f0")
-        country_label.pack(pady=5)
-        country_entry = tk.Entry(popup, width=30)
-        country_entry.insert(0, country)
-        country_entry.pack(pady=5)
+        date_entry, country_entry, cases_entry, deaths_entry = entries
 
-        cases_label = tk.Label(popup, text="Số ca mắc mới:", bg="#f0f0f0")
-        cases_label.pack(pady=5)
-        cases_entry = tk.Entry(popup, width=30)
-        cases_entry.insert(0, new_cases)
-        cases_entry.pack(pady=5)
-
-        deaths_label = tk.Label(popup, text="Số ca tử vong mới:", bg="#f0f0f0")
-        deaths_label.pack(pady=5)
-        deaths_entry = tk.Entry(popup, width=30)
-        deaths_entry.insert(0, new_deaths)
-        deaths_entry.pack(pady=5)
-
+        # Nút Lưu
         def update_command():
-            treeview_table.save_updated_data(cases_entry, deaths_entry, date_entry, country, popup)
+            treeview_table.save_updated_data(no, cases_entry, deaths_entry, date_entry, country, popup, country_code,who_region)
 
-        save_button = tk.Button(popup, text="Lưu", command=update_command, bg="#00796b", fg="white",
-                                font=("Helvetica", 12))
+        save_button = tk.Button(popup, text="Lưu", command=update_command, bg="#00796b", fg="white", font=("Helvetica", 12) )
         save_button.pack(pady=10)
 
     def delete_multiple_data(self, treeview_table):
@@ -228,7 +220,7 @@ class CRUD:
             treeview_table.delete_selected()
 
             # Cập nhật lại TreeView với dữ liệu mới
-            treeview_table.display_treeview()  # Cập nhật lại TreeView từ dữ liệu đã lọc
+            treeview_table.display_treeview()
 
             messagebox.showinfo("Thành công", "Đã xóa các dữ liệu thành công!")
         except Exception as e:
