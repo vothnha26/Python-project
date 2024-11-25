@@ -4,15 +4,16 @@ import matplotlib.dates as mdates
 from matplotlib.ticker import FuncFormatter, ScalarFormatter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
+from modules.ClassDesign import DataAnalyzer
+
 
 class ChartPlotter():
-    def __init__(self, data_path="D:/PYTHON(project)/Python-project/project/data/data_clean.csv"):
-        # Đường dẫn đến tệp CSV
-        self.data_path = data_path
+    def __init__(self):
+        self.data = DataAnalyzer().data
 
     def bar_chart(self, master_frame, country):
         try:
-            df = pd.read_csv(self.data_path)
+            df = self.data
             if df.empty:
                 messagebox.showerror("Lỗi", "Tệp CSV không chứa dữ liệu.")
                 return
@@ -74,7 +75,7 @@ class ChartPlotter():
 
     def pie_chart(self, master_frame):
         try:
-            df = pd.read_csv(self.data_path)
+            df = self.data
             if df.empty:
                 messagebox.showerror("Lỗi", "Tệp CSV không chứa dữ liệu.")
                 return
@@ -100,7 +101,7 @@ class ChartPlotter():
             percentages = pd.concat([percentages, pd.Series(100 - percentages.sum(), index=["OTHER"])])
 
             # Tạo biểu đồ tròn
-            fig, ax = plt.subplots(figsize=(6, 6))
+            fig, ax = plt.subplots(figsize=(5, 6))
 
             # Vẽ biểu đồ tròn với nhãn chỉ cho các quốc gia có tỉ lệ >= 2%
             ax.pie(cases_by_country, 
@@ -136,11 +137,64 @@ class ChartPlotter():
             messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
     def plot_chart(self, master_frame):
         try:
-            df = pd.read_csv(self.data_path)
+            df = self.data
             if df.empty:
                 messagebox.showerror("Lỗi", "Tệp CSV không chứa dữ liệu.")
                 return
-            
+            # Kiểm tra sự tồn tại của cột cần thiết
+            if 'Country' not in df.columns or 'New_deaths' not in df.columns or 'Date_reported' not in df.columns:
+                messagebox.showerror("Lỗi", "Tệp CSV không chứa các cột cần thiết: 'Country', 'New_deaths' hoặc 'Date_reported'.")
+                return
+
+            # Định dạng cột ngày
+            df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d', errors='coerce')
+
+            # Loại bỏ các hàng có giá trị tử vong bị thiếu
+            df = df.dropna(subset=['New_deaths'])
+
+            # Tính tổng số ca tử vong theo quốc gia
+            deaths_by_country = df.groupby('Country')['New_deaths'].sum()
+
+            # Lấy 5 quốc gia có số ca tử vong cao nhất
+            top_5_countries = deaths_by_country.nlargest(5).index
+
+            # Lọc dữ liệu chỉ chứa top 5 quốc gia
+            top_5_data = df[df['Country'].isin(top_5_countries)]
+
+            # Nhóm dữ liệu theo quốc gia và ngày
+            grouped_data = top_5_data.groupby(['Country', 'Date_reported'])['New_deaths'].sum().reset_index()
+
+            # Vẽ biểu đồ đường
+            fig, ax = plt.subplots(figsize=(12, 6))
+            for country in top_5_countries:
+                country_data = grouped_data[grouped_data['Country'] == country]
+                ax.plot(
+                    country_data['Date_reported'],
+                    country_data['New_deaths'],
+                    label=country,
+                    marker='o',
+                    markersize=4,
+                    alpha=0.8
+                )
+
+            # Định dạng biểu đồ
+            ax.set_title("Top 5 Quốc Gia Có Số Ca Tử Vong Cao Nhất Theo Thời Gian", fontsize=16)
+            ax.set_xlabel("Ngày Báo Cáo", fontsize=12)
+            ax.set_ylabel("Số Ca Tử Vong", fontsize=12)
+            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))  # Hiển thị tháng cách nhau 2
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{int(x):,}'))
+            plt.xticks(rotation=45, ha='right')
+            ax.legend(title="Quốc Gia", loc='upper left', fontsize=10)
+            plt.grid(alpha=0.3)
+
+            # Điều chỉnh bố cục
+            plt.tight_layout()
+
+            # Nhúng biểu đồ vào Tkinter
+            canvas = FigureCanvasTkAgg(fig, master=master_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(expand=True, fill='both')
 
 
         except FileNotFoundError:

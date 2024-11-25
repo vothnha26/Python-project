@@ -127,7 +127,7 @@ class App:
 
         self.search_button.configure(command=search_command)
 
-        self.Crud_config = CRUD(data_path)
+        self.Crud_config = CRUD()
 
         def create_command():
             self.Crud_config.create_data_popup(self.treeview_table)
@@ -244,6 +244,7 @@ class App:
 
     def display_chart_Bar(self):
         country = self.input_country.get()
+        print(country)
         a = country.split()
         for i in range(len(a)):
             a[i] = a[i].capitalize()
@@ -252,9 +253,9 @@ class App:
             for widget in self.display_frame.winfo_children():
                 if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
                     widget.get_tk_widget().destroy()
-
+            chart = ChartPlotter()
             # Vẽ biểu đồ dựa trên tên quốc gia được nhập
-            ChartPlotter.bar_chart(self, self.display_frame, country)
+            chart.bar_chart(self.display_frame, country)
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
     def display_chart_Pie(self):

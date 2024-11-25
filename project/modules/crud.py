@@ -7,9 +7,9 @@ from modules.treeview_table import TreeViewFilter
 
 
 class CRUD:
-    def __init__(self, data_path):
-        self.data = DataAnalyzer(data_path)
-        self.file_path = data_path
+    def __init__(self):
+        self.data = DataAnalyzer()
+        self.file_path = DataAnalyzer().file_path
 
     def create_data_popup(self, treeview_table):
 

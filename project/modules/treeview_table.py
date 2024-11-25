@@ -3,12 +3,8 @@ from tkinter import ttk, messagebox
 from modules.ClassDesign import DataAnalyzer
 import pandas as pd
 
-<<<<<<< HEAD
-file_path = 'D:\PYTHON(project)\Python-project\project\data\data_clean.csv'
 
-=======
-file_path = './data/data_clean.csv'
->>>>>>> acec6c02263017c61e802b88690d940f1e246336
+file_path = DataAnalyzer().file_path
 ROWS_PER_PAGE = 1000
 
 
@@ -23,7 +19,7 @@ class BaseTreeView:
     def __init__(self, frame, check_tree=False, date='2020-01-05'):
         self.frame = frame
         self.tree = ttk.Treeview(self.frame, selectmode="extended")
-        self.filter_data_tree = copy.deepcopy(DataAnalyzer(file_path).data)
+        self.filter_data_tree = copy.deepcopy(DataAnalyzer().data)
         self.date = date
 
         if check_tree is True:
