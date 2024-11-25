@@ -89,6 +89,15 @@ class App:
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
+        entry = Entry(self.button_frame)
+        entry.place(x=455, y=427)
+
+        def on_enter_key(event):
+            self.treeview_table.current_page = int(entry.get()) - 1 if entry.get() != '' else 0
+            self.treeview_table.display_treeview()
+
+        entry.bind("<Return>", on_enter_key)
+
         def search_command():
             popup = tk.Toplevel()
             popup.title("Tìm kiếm")
@@ -165,8 +174,6 @@ class App:
 
     # Hiển thị dữ liệu đã lọc theo ngày
     def show_tree_view_filter(self, event=None):
-        self.treeview_table.clear_treeview()
-
         self.cal.place(x=0, y=0)
         # Thêm TreeView
         self.treeview_table.clear_treeview()
@@ -181,7 +188,6 @@ class App:
 
         self.treeview_table = TreeViewFilter(self.button_frame, f"{year}-{month}-{day}")
         self.treeview_table.display_treeview()
-        self.treeview_table.update_page_label()
 
     # Hiển thị bảng sau khi sắp xếp
     def display_sort_table(self):

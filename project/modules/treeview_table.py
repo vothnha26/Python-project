@@ -3,7 +3,7 @@ from tkinter import ttk, messagebox
 from modules.ClassDesign import DataAnalyzer
 import pandas as pd
 
-file_path = 'D:\PYTHON(project)\Python-project\project\data/data_clean.csv'
+file_path = './data/data_clean.csv'
 ROWS_PER_PAGE = 1000
 
 
@@ -15,21 +15,16 @@ def convert_data(val):
 
 
 class BaseTreeView:
-    def __init__(self, frame, excluded_columns=None, filter_condition=None):
+    def __init__(self, frame, check_tree=False, date='2020-01-05'):
         self.frame = frame
         self.tree = ttk.Treeview(self.frame, selectmode="extended")
-        self.excluded_columns = excluded_columns or []
-        self.data_root = DataAnalyzer(file_path).data
+        self.filter_data_tree = copy.deepcopy(DataAnalyzer(file_path).data)
+        self.date = date
 
-        if filter_condition:
-            self.data_root = self.data_root[filter_condition]  # lọc các giá trị thỏa mãn điều kiện cột đang xét
+        if check_tree is True:
+            self.filter_data_tree = DataAnalyzer(file_path).filter_data_root(date)
 
-        # Lọc các cột cần cho TreeView
-        self.columns_to_include = [col for col in self.data_root if col not in self.excluded_columns]
-        self.data_root = self.data_root[self.columns_to_include]
-        self.filter_data_tree = copy.deepcopy(self.data_root)
-
-        self.tree["columns"] = ["No."] + self.columns_to_include
+        self.tree["columns"] = ["No."] + self.filter_data_tree.columns.tolist()
         self.tree["show"] = "headings"
 
         # Tạo tiêu đề cho các cột
@@ -89,6 +84,7 @@ class BaseTreeView:
         """Sắp xếp dữ liệu trên bảng phân trang."""
         data = [(convert_data(self.tree.set(item, col)), item) for item in self.tree.get_children()]
         data = sorted(data, reverse=descending)
+
         for index, (_, item) in enumerate(data):
             self.tree.move(item, '', index)
         self.tree.heading(col, command=lambda: self.sort_treeview_page(col, not descending))
@@ -114,11 +110,14 @@ class BaseTreeView:
             if var.get() is True:
                 option_year.append(year)
 
-        if len(option_area) == 0 and len(option_year) == 0:
+        if len(option_area) + len(option_year) == 0:
             return
 
         if len(option_year) == 0:
             option_year = ['2020', '2021', '2022', '2023', '2024']
+
+        if len(option_area) == 0:
+            option_area = ['AMRO', 'WPRO', 'EURO', 'SEARO', 'AFRO', 'EMRO', 'OTHER']
         """"Bộ lọc toàn bộ trang"""
         self.current_page = 0
         compare = lambda x, y: x.isin(y)
@@ -138,8 +137,14 @@ class BaseTreeView:
     def search_country_tree(self, country_name: str, date: str):
         self.current_page = 0
         """Tìm kiếm và hiển thị kết quả trong Treeview."""
-        self.current_page = 0
 
+        if country_name == '' and date == '':
+            return
+
+        if country_name == '':
+            self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
+
+        # Tìm chuỗi con trong Country
         def country_matches(row):
             n = len(row["Country"])
             m = len(country_name)
@@ -151,6 +156,7 @@ class BaseTreeView:
             return False
 
         self.filter_data_tree = self.filter_data_tree[self.filter_data_tree.apply(country_matches, axis=1)]
+
         if date != '':
             self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
         self.display_treeview()
@@ -169,7 +175,8 @@ class BaseTreeView:
 
     def restore_data_root(self):
         """"Trả về dữ liệu ban đầu."""
-        self.filter_data_tree = self.data_root
+        self.filter_data_tree = DataAnalyzer(file_path).data if isinstance(self, TreeViewTable) else DataAnalyzer(
+            file_path).filter_data_root(self.date)
         self.current_page = 0
         self.display_treeview()
 
@@ -205,16 +212,13 @@ class TreeViewTable(BaseTreeView):
 
     def delete_selected(self):
         selected_item = self.tree.selection()  # Lấy item đang được chọn
+
         if selected_item:
-            for item in selected_item:
+            for i, item in enumerate(selected_item):
                 # Xóa dòng dữ liệu trong filter_data_tree
-                row_index = int(self.tree.item(item, "values")[0]) - 1
+                row_index = int(self.tree.item(item, "values")[0]) - 1 - i
                 self.filter_data_tree.drop(self.filter_data_tree.index[row_index], inplace=True)
                 self.tree.delete(item)  # Xóa item khỏi TreeView
-
-            # Cập nhật lại số trang và nhãn trang hiện tại sau khi xóa dữ liệu
-            self.update_total_pages()
-            self.update_page_label()
 
     def save_updated_data(self, no=None, cases_entry=None, deaths_entry=None, date_entry=None, country=None, popup=None,
                           country_code=None, who_region=None):
@@ -289,8 +293,4 @@ class TreeViewTable(BaseTreeView):
 class TreeViewFilter(BaseTreeView):
     def __init__(self, frame, date='2020-01-05'):
         self.date = date
-        super().__init__(frame, excluded_columns=['Date_reported', 'Country_code'],
-                         filter_condition=self.filter_condition)
-
-    def filter_condition(self, data):
-        return data['Date_reported'] == self.date
+        super().__init__(frame, True, date)
