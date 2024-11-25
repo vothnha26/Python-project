@@ -3,7 +3,8 @@ from tkinter import ttk, messagebox
 from modules.ClassDesign import DataAnalyzer
 import pandas as pd
 
-file_path = 'D:\PYTHON(project)\Python-project\project\data/data_clean.csv'
+file_path = 'D:\PYTHON(project)\Python-project\project\data\data_clean.csv'
+
 ROWS_PER_PAGE = 1000
 
 

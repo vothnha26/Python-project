@@ -25,6 +25,7 @@ class DataAnalyzer:
         self.countries: Dict[str, Country] = {}
         self.regions: Dict[str, Country] = {}
 
+    def load_data(self):
         """
         Tải dữ liệu từ file CSV và tổ chức thành các đối tượng Country.
         """
