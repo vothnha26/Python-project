@@ -1,10 +1,9 @@
-from functools import update_wrapper
 import pandas as pd
 import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 from modules.ClassDesign import DataAnalyzer
-from modules.treeview_table import TreeViewTable, TreeViewFilter
+from modules.treeview_table import TreeViewFilter
 
 
 class CRUD:
@@ -13,8 +12,6 @@ class CRUD:
         self.file_path = data_path
 
     def create_data_popup(self, treeview_table):
-        if isinstance(treeview_table, TreeViewFilter):
-            return
 
         popup = tk.Toplevel()
         popup.title("Thêm dữ liệu mới")
@@ -127,6 +124,7 @@ class CRUD:
 
             # Lưu dữ liệu vào file
             try:
+                # Ghi chuỗi rỗng vào file
                 df.to_csv(self.file_path, index=False)
                 treeview_table.filter_data_tree = pd.concat([treeview_table.filter_data_tree, existing_data],
                                                             ignore_index=True)
@@ -214,8 +212,9 @@ class CRUD:
         # Chuyển đổi ngày báo cáo về dạng datetime và tìm các hàng cần xóa trong DataFrame
         df = self.data.data
         for date_reported, country in rows_to_delete:
-            date_reported = pd.to_datetime(date_reported)
-            df = df[~((df['Date_reported'] == date_reported) & (df['Country'] == country))]
+            date_reported = pd.to_datetime(date_reported).strftime('%Y-%m-%d')
+            # df = df[~((df['Date_reported'] == date_reported) & (df['Country'] == country))]
+            df = df.drop(df[(df['Date_reported'] == date_reported) & (df['Country'] == country)].index)
 
         # Cập nhật lại các giá trị tích lũy cho các quốc gia sau khi xóa
         for date_reported, country in rows_to_delete:
@@ -230,8 +229,8 @@ class CRUD:
 
         # Lưu dữ liệu vào CSV
         try:
-            df.to_csv(self.file_path, index=False)
             self.data.data = df  # Cập nhật dữ liệu trong DataAnalyzer
+            df.to_csv(self.file_path, index=False)
 
             # Xóa các hàng trong TreeView
             treeview_table.delete_selected()

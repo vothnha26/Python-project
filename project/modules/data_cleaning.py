@@ -28,4 +28,3 @@ def clean_data(input_file, output_file):
 
     # Lưu file đã làm sạch
     df.to_csv(output_file, index=False)
-    print(f"Dữ liệu đã được làm sạch")
