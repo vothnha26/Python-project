@@ -9,3 +9,4 @@ if __name__ == "__main__":
     data_cleaning.clean_data(file_in, file_out)
     app = vs.App(root, file_out)
     root.mainloop()
+    
