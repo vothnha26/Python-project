@@ -1,4 +1,3 @@
-import copy
 import pandas as pd
 
 
@@ -7,19 +6,21 @@ class DataAnalyzer:
         """
         Lớp quản lý dữ liệu từ file CSV.
         """
+<<<<<<< HEAD
         self.file_path = "D:\PYTHON(project)\Python-project\project\data\data_clean.csv"
+=======
+        self.file_path = "./data/data_clean.csv"
+>>>>>>> 86df127f917eb5f871e9b6be3e6e15e5fcf94c03
         self.data = pd.read_csv(self.file_path)
 
     def filter_data_root(self, date):
-        excluded_columns = ['Date_reported', 'Country_code']
         data_root = self.data
         data_root = data_root[data_root['Date_reported'] == date]
-
-        # Lọc các cột cần cho TreeView
-        columns_to_include = [col for col in data_root if col not in excluded_columns]
+        columns_to_include = ['Country', 'WHO_region', 'New_cases', 'Cumulative_cases', 'New_deaths',
+                              'Cumulative_deaths']
 
         data_root = data_root[columns_to_include]  # lọc các giá trị thỏa mãn điều kiện cột đang xét
-        data_root["Total_recovery"] = [row["Cumulative_cases"] - row["Cumulative_deaths"] for _, row in
+        data_root["Total_recovery"] = [int(row["Cumulative_cases"]) - int(row["Cumulative_deaths"]) for _, row in
                                        data_root.iloc[:].iterrows()]
 
         return data_root

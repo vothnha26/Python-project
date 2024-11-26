@@ -3,7 +3,6 @@ from tkinter import ttk, messagebox
 from modules.ClassDesign import DataAnalyzer
 import pandas as pd
 
-
 file_path = DataAnalyzer().file_path
 ROWS_PER_PAGE = 1000
 
@@ -176,8 +175,14 @@ class BaseTreeView:
 
     def restore_data_root(self):
         """"Trả về dữ liệu ban đầu."""
+<<<<<<< HEAD
         self.filter_data_tree = DataAnalyzer().data if isinstance(self, TreeViewTable) else DataAnalyzer(
             ).filter_data_root(self.date)
+=======
+        self.filter_data_tree = pd.read_csv('./data/data_clean.csv') if isinstance(self,
+                                                                  TreeViewTable) else DataAnalyzer().filter_data_root(
+            self.date)
+>>>>>>> 86df127f917eb5f871e9b6be3e6e15e5fcf94c03
         self.current_page = 0
         self.display_treeview()
 
