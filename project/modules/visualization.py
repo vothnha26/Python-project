@@ -155,23 +155,21 @@ class App:
 
         # Input và nút vẽ biểu đồ
 
-        # self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
-        # self.chart_type_label.pack(pady=10)
-
-        # self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột", "Biểu đồ tròn"], state="readonly")
-        # self.chart_type_combobox.pack(pady=5)
+        
 
         self.input_country = tk.Entry(self.display_frame, width=30)
         self.input_country.pack(pady=5)
+        #Combobox
+        self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
+        self.chart_type_label.pack(pady=10)
 
-        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ cột", command= self.display_chart_Bar)
+        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột", "Biểu đồ tròn", "Biểu đồ đường"], state="readonly")
+        self.chart_type_combobox.pack(pady=5)
+
+        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command= self.chart_selection)
         self.plot_button.pack(pady=5)
 
-        self.plot_button1 = ttk.Button(self.display_frame, text="Vẽ biểu đồ tròn", command=self.display_chart_Pie)
-        self.plot_button1.pack(pady=5)
-
-        self.plot_button2 = ttk.Button(self.display_frame, text="Vẽ biểu đồ đường", command=self.display_chart_plot)
-        self.plot_button2.pack(pady=5)
+       
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
@@ -244,53 +242,36 @@ class App:
                                   bg="#00796b", fg="white", font=("Helvetica", 12))
         filter_button.grid(row=4, columnspan=7, pady=10)
 
-    # biểu đồ cột
-    def display_chart_Bar(self):
-        country = self.input_country.get()
-        print(country)
-        a = country.split()
-        for i in range(len(a)):
-            a[i] = a[i].capitalize()
-        country = " ".join(a)
-        if country:
-            for widget in self.display_frame.winfo_children():
-                if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
-                    widget.get_tk_widget().destroy()
-            chart = ChartPlotter()
-            # Vẽ biểu đồ dựa trên tên quốc gia được nhập
+
+    
+    def chart_selection(self):
+        chart_type = self.chart_type_combobox.get()  # Lấy giá trị từ Combobox
+        country = self.input_country.get().strip()
+
+        if not chart_type:
+            messagebox.showwarning("Cảnh báo", "Vui lòng chọn kiểu biểu đồ.")
+            return
+        if not country and chart_type != "Biểu đồ tròn" and chart_type != "Biểu đồ đường":  # Biểu đồ tròn có thể không cần tên quốc gia
+            messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
+            return
+
+        # Chuẩn hóa tên quốc gia
+        country = " ".join([word.capitalize() for word in country.split()])
+
+
+        chart = ChartPlotter(self.treeview_table.filter_data_tree)
+        if chart_type == "Biểu đồ cột":
             chart.bar_chart(self.display_frame, country)
-        else:
-            messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
-    # biểu đồ tròn
-    def display_chart_Pie(self):
-        for widget in self.display_frame.winfo_children():
-                if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
-                    widget.get_tk_widget().destroy()
-        chart = ChartPlotter()
-        chart.pie_chart(self.display_frame)
-    # biểu đồ đường
-    def display_chart_plot(self):
-        contry = self.input_country.get()
-        print(contry)
-        a = country.split()
-        for i in range(len(a)):
-            a[i] = a[i].capitalize()
-        country = " ".join(a)
-
-        if country:
-            for widget in self.display_frame.winfo_children():
-                if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
-                    widget.get_tk_widget().destroy()
-
-            chart = ChartPlotter()
-            chart.plot_chart(self.display_frame, contry)
-        else:
-            messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
-        
+        elif chart_type == "Biểu đồ tròn":
+            chart.pie_chart(self.display_frame)
+        elif chart_type == "Biểu đồ đường":
+            chart.plot_chart(self.display_frame)
     def reset_chart(self):
         
         # Xóa tất cả các widget liên quan đến biểu đồ khỏi display_frame
         for widget in self.display_frame.winfo_children():
+            if widget == self.cal:
+                continue
             widget.destroy()
         #Thêm lại input và nút vẽ biểu đồ
         self.display_label = tk.Label(self.display_frame, text="Khu vực hiển thị dữ liệu", font=("Helvetica", 12),
@@ -299,15 +280,16 @@ class App:
 
         self.input_country = tk.Entry(self.display_frame, width=30)
         self.input_country.pack(pady=5)
+        
+        #combobox
+        self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
+        self.chart_type_label.pack(pady=10)
 
-        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ cột", command=self.display_chart_Bar)
+        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột", "Biểu đồ tròn", "Biểu đồ đường"], state="readonly")
+        self.chart_type_combobox.pack(pady=5)
+
+        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command= self.chart_selection)
         self.plot_button.pack(pady=5)
-
-        self.plot_button1 = ttk.Button(self.display_frame, text="Vẽ biểu đồ tròn", command=self.display_chart_Pie)
-        self.plot_button1.pack(pady=5)
-
-        self.plot_button2 = ttk.Button(self.display_frame, text="Vẽ biểu đồ đường", command=self.display_chart_plot)
-        self.plot_button2.pack(pady=5)
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)

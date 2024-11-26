@@ -23,7 +23,7 @@ class BaseTreeView:
         self.date = date
 
         if check_tree is True:
-            self.filter_data_tree = DataAnalyzer(file_path).filter_data_root(date)
+            self.filter_data_tree = DataAnalyzer().filter_data_root(date)
 
         self.tree["columns"] = ["No."] + self.filter_data_tree.columns.tolist()
         self.tree["show"] = "headings"
@@ -176,8 +176,8 @@ class BaseTreeView:
 
     def restore_data_root(self):
         """"Trả về dữ liệu ban đầu."""
-        self.filter_data_tree = DataAnalyzer(file_path).data if isinstance(self, TreeViewTable) else DataAnalyzer(
-            file_path).filter_data_root(self.date)
+        self.filter_data_tree = DataAnalyzer().data if isinstance(self, TreeViewTable) else DataAnalyzer(
+            ).filter_data_root(self.date)
         self.current_page = 0
         self.display_treeview()
 

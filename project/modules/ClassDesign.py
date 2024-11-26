@@ -7,7 +7,7 @@ class DataAnalyzer:
         """
         Lớp quản lý dữ liệu từ file CSV.
         """
-        self.file_path = ".\data\data_clean.csv"
+        self.file_path = "D:\PYTHON(project)\Python-project\project\data\data_clean.csv"
         self.data = pd.read_csv(self.file_path)
 
     def filter_data_root(self, date):
