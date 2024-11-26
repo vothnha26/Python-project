@@ -3,7 +3,7 @@ import tkinter as tk
 from tkinter import messagebox
 from datetime import datetime
 from modules.ClassDesign import DataAnalyzer
-from modules.treeview_table import TreeViewFilter, TreeViewTable
+from modules.treeview_task import TreeViewTable
 
 
 class CRUD:
@@ -11,7 +11,7 @@ class CRUD:
         self.data = DataAnalyzer()
         self.file_path = DataAnalyzer().file_path
 
-    def create_data_popup(self, treeview_table):
+    def create_data_popup(self, treeview_table: TreeViewTable):
         popup = tk.Toplevel()
         popup.title("Thêm dữ liệu mới")
         popup.geometry("300x400")
@@ -129,8 +129,7 @@ class CRUD:
             try:
                 # Ghi chuỗi rỗng vào file
                 df.to_csv(self.file_path, index=False)
-                treeview_table.filter_data_tree = existing_data if isinstance(treeview_table,
-                                                                              TreeViewTable) else DataAnalyzer().filter_data_root(
+                treeview_table.filter_data_tree = existing_data if treeview_table.cal_status is False else DataAnalyzer().filter_data_root(
                     str(date))
 
                 self.data.data = df
@@ -145,9 +144,6 @@ class CRUD:
         save_button.pack(pady=10)
 
     def update_data_popup(self, treeview_table):
-        if isinstance(treeview_table, TreeViewFilter):
-            return
-
         """Tạo popup để cập nhật dữ liệu được chọn."""
         selected_item = treeview_table.tree.selection()
         if not selected_item:
@@ -157,7 +153,7 @@ class CRUD:
         # Lấy dữ liệu từ hàng được chọn
         item_data = treeview_table.tree.item(selected_item[0])
         row_values = item_data['values']
-        no, date_reported, country_code, country, who_region, new_cases, cumulative_cases, new_deaths, cumulative_deaths = row_values
+        no, date_reported, country_code, country, who_region, new_cases, cumulative_cases, new_deaths, cumulative_deaths, _ = row_values
 
         popup = tk.Toplevel()
         popup.title("Cập nhật dữ liệu")
@@ -191,9 +187,6 @@ class CRUD:
         save_button.pack(pady=10)
 
     def delete_multiple_data(self, treeview_table):
-        if isinstance(treeview_table, TreeViewFilter):
-            return
-
         # Lấy tất cả các hàng đã chọn trong TreeView
         selected_items = treeview_table.tree.selection()
         if not selected_items:

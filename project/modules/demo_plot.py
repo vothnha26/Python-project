@@ -7,9 +7,9 @@ from tkinter import messagebox
 from modules.ClassDesign import DataAnalyzer
 
 
-class ChartPlotter():
-    def __init__(self):
-        self.data = DataAnalyzer().data
+class ChartPlotter:
+    def __init__(self, filter_data_tree):
+        self.data = filter_data_tree
 
     def bar_chart(self, master_frame, country):
         try:

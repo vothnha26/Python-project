@@ -2,7 +2,9 @@ import tkinter as tk
 from calendar import Calendar
 from tkinter import messagebox, ttk
 from tkinter import *
-from modules.treeview_table import TreeViewTable, TreeViewFilter
+
+from modules.ClassDesign import DataAnalyzer
+from modules.treeview_task import TreeViewTable
 from modules.demo_plot import ChartPlotter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from modules.crud import CRUD
@@ -164,7 +166,7 @@ class App:
         self.input_country = tk.Entry(self.display_frame, width=30)
         self.input_country.pack(pady=5)
 
-        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ cột", command= self.display_chart_Bar)
+        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ cột", command=self.display_chart_Bar)
         self.plot_button.pack(pady=5)
 
         self.plot_button1 = ttk.Button(self.display_frame, text="Vẽ biểu đồ tròn", command=self.display_chart_Pie)
@@ -176,23 +178,19 @@ class App:
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
 
-        
     # Hiển thị toàn bộ dữ liệu TreeView
     def show_tree_view_all(self):
         self.cal.place_forget()
-        self.treeview_table.clear_treeview()
-        # Thêm TreeView
-        self.treeview_table.clear_treeview()
-        self.treeview_table = TreeViewTable(self.button_frame)
+
+        # Cập nhật trạng thái bảng
+        self.treeview_table.cal_status = False
+        self.treeview_table.filter_data_tree = DataAnalyzer().data
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
     # Hiển thị dữ liệu đã lọc theo ngày
     def show_tree_view_filter(self, event=None):
         self.cal.place(x=0, y=0)
-        # Thêm TreeView
-        self.treeview_table.clear_treeview()
-
         # Tách tháng, ngày, năm
         month, day, year = map(str, self.cal.get_date().split("/"))
         year = int(year)
@@ -201,7 +199,11 @@ class App:
         if len(month) == 1: month = '0' + month
         if len(day) == 1: day = '0' + day
 
-        self.treeview_table = TreeViewFilter(self.button_frame, f"{year}-{month}-{day}")
+        # Cập nhật ngày, dữ liệu của bảng
+        date = f"{year}-{month}-{day}"
+        self.treeview_table.cal_status = True
+        self.treeview_table.date = date
+        self.treeview_table.filter_data_tree = DataAnalyzer().filter_data_root(date)
         self.treeview_table.display_treeview()
 
     # Hiển thị bảng sau khi sắp xếp
@@ -230,7 +232,7 @@ class App:
             Checkbutton(popup, text=option, variable=var).grid(row=1, column=i)
             filter_area[option] = var
 
-        if isinstance(self.treeview_table, TreeViewTable):
+        if self.treeview_table.cal_status is False:
             Label(popup, text="Năm", bg="#00796b", fg="white", font=("Helvetica", 16)).grid(row=2, columnspan=7)
 
             for i, option in enumerate(options_year):
@@ -247,7 +249,6 @@ class App:
     # biểu đồ cột
     def display_chart_Bar(self):
         country = self.input_country.get()
-        print(country)
         a = country.split()
         for i in range(len(a)):
             a[i] = a[i].capitalize()
@@ -256,22 +257,23 @@ class App:
             for widget in self.display_frame.winfo_children():
                 if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
                     widget.get_tk_widget().destroy()
-            chart = ChartPlotter()
+            chart = ChartPlotter(self.treeview_table.filter_data_tree)
             # Vẽ biểu đồ dựa trên tên quốc gia được nhập
             chart.bar_chart(self.display_frame, country)
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
+
     # biểu đồ tròn
     def display_chart_Pie(self):
         for widget in self.display_frame.winfo_children():
-                if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
-                    widget.get_tk_widget().destroy()
-        chart = ChartPlotter()
+            if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
+                widget.get_tk_widget().destroy()
+        chart = ChartPlotter(self.treeview_table.filter_data_tree)
         chart.pie_chart(self.display_frame)
+
     # biểu đồ đường
     def display_chart_plot(self):
-        contry = self.input_country.get()
-        print(contry)
+        country = self.input_country.get()
         a = country.split()
         for i in range(len(a)):
             a[i] = a[i].capitalize()
@@ -282,17 +284,19 @@ class App:
                 if isinstance(widget, FigureCanvasTkAgg):  # Chỉ xóa canvas của biểu đồ
                     widget.get_tk_widget().destroy()
 
-            chart = ChartPlotter()
-            chart.plot_chart(self.display_frame, contry)
+            chart = ChartPlotter(self.treeview_table.filter_data_tree)
+            chart.plot_chart(self.display_frame)
         else:
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
-        
+
     def reset_chart(self):
-        
+
         # Xóa tất cả các widget liên quan đến biểu đồ khỏi display_frame
         for widget in self.display_frame.winfo_children():
+            if widget == self.cal:
+                continue
             widget.destroy()
-        #Thêm lại input và nút vẽ biểu đồ
+        # Thêm lại input và nút vẽ biểu đồ
         self.display_label = tk.Label(self.display_frame, text="Khu vực hiển thị dữ liệu", font=("Helvetica", 12),
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
@@ -311,5 +315,3 @@ class App:
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
         self.reset_button.pack(pady=5)
-
-        
