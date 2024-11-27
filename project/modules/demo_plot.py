@@ -1,5 +1,4 @@
 import pandas as pd
-from modules.ClassDesign import DataAnalyzer
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 from matplotlib.ticker import FuncFormatter, ScalarFormatter
@@ -7,11 +6,11 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
 
 
-<<<<<<< HEAD
-class ChartPlotter():
-=======
+# <<<<<<< HEAD
+# class ChartPlotter():
+# =======
 class ChartPlotter:
->>>>>>> f3267c0421766d9a8b0692ce615af38c18f6db81
+# >>>>>>> f3267c0421766d9a8b0692ce615af38c18f6db81
     def __init__(self, filter_data_tree):
         self.data = filter_data_tree
 

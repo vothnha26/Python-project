@@ -1,9 +1,7 @@
-from pathlib import Path
 import pandas as pd
 import numpy as np
 
 def clean_data(input_file, output_file):
-    
     # Đọc dữ liệu từ file CSV
     df = pd.read_csv(input_file, encoding="utf-8-sig")
 
