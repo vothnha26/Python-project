@@ -23,6 +23,7 @@ def clean_data(input_file, output_file):
 
     # Xóa các dòng có cột WHO_region trống
     df = df.dropna(subset=["WHO_region"])
-
+    df = df.dropna(subset=["Cumulative_deaths"])
+    df = df.dropna(subset=["Cumulative_cases"])
     # Lưu file đã làm sạch
     df.to_csv(output_file, index=False)

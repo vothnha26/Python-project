@@ -62,13 +62,16 @@ class BaseTreeView:
         self.reset_button.place(x=290, y=680)
 
     def display_treeview(self):
+        
+        self.filter_data_tree['Total_recovery'] = self.filter_data_tree['Cumulative_cases'].astype(int) - self.filter_data_tree['Cumulative_deaths'].astype(int)
+        
         self.update_total_pages()
         self.update_page_label()
         """Hiển thị dữ liệu lên Treeview theo trang, bao gồm cột thứ tự."""
         self.tree.delete(*self.tree.get_children())  # Xóa dữ liệu cũ
         start = self.current_page * ROWS_PER_PAGE
         end = start + ROWS_PER_PAGE
-
+        
         for i, (_, row) in enumerate(self.filter_data_tree.iloc[start:end].iterrows(), start=1):
             self.tree.insert("", "end", values=[start + i] + list(row))
 
@@ -248,7 +251,7 @@ class BaseTreeView:
 
 
 class TreeViewTable(BaseTreeView):
-    def __init__(self, frame):
+    def __init__(self, frame, file_path):
         super().__init__(frame)
 
         # tạo các nút phân trang

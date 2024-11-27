@@ -6,11 +6,9 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
 
 
-# <<<<<<< HEAD
-# class ChartPlotter():
-# =======
+
 class ChartPlotter:
-# >>>>>>> f3267c0421766d9a8b0692ce615af38c18f6db81
+
     def __init__(self, filter_data_tree):
         self.data = filter_data_tree
 
@@ -50,9 +48,9 @@ class ChartPlotter:
             # Vẽ biểu đồ
             fig, ax = plt.subplots(figsize=(12, 6))
             ax.bar(filtered_time_df['Date_reported'], filtered_time_df['New_cases'], width=2)
-            ax.set_xlabel('Date_reported')
-            ax.set_ylabel('New_cases')
-            ax.set_title(f'New Cases in {country}')
+            ax.set_xlabel('Ngày')
+            ax.set_ylabel('Số Ca Nhiễm Mới')
+            ax.set_title(f'Số Ca Nhiễm Mới Ở {country}')
 
             # Định dạng trục x và y
             ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
@@ -152,8 +150,6 @@ class ChartPlotter:
             # Định dạng cột ngày
             df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d', errors='coerce')
 
-            # Loại bỏ các hàng có giá trị tử vong bị thiếu
-            df = df.dropna(subset=['New_deaths'])
 
             # Tính tổng số ca tử vong theo quốc gia
             deaths_by_country = df.groupby('Country')['New_deaths'].sum()
@@ -206,4 +202,35 @@ class ChartPlotter:
             messagebox.showerror("Lỗi", "Lỗi khi phân tích tệp CSV. Vui lòng kiểm tra dữ liệu.")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
-    
+    def plot_total_recovery(self, master_frame):
+        try:
+            df = self.data
+            df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d', errors='coerce')
+            
+
+            recovery_by_date = df.groupby('Date_reported')['Total_recovery'].sum().reset_index()
+            
+            fig, ax = plt.subplots(figsize=(12, 6))
+            ax.plot(recovery_by_date['Date_reported'], recovery_by_date['Total_recovery'], linestyle='-', linewidth=2, markersize=4)
+            
+            # Định dạng biểu đồ
+            ax.set_title('Tổng Số Ca Hồi Phục COVID-19', fontsize=14)
+            ax.set_xlabel('Ngày', fontsize=12)
+            ax.set_ylabel('Số Ca Hồi Phục', fontsize=12)
+            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))  # Hiển thị tháng cách nhau 2
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{int(x):,}'))
+            ax.grid(True, linestyle='--', alpha=0.7)
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+
+            canvas = FigureCanvasTkAgg(fig, master=master_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(expand=True, fill='both')
+
+        except FileNotFoundError:
+            messagebox.showerror("Lỗi", "Không tìm thấy tệp dữ liệu. Vui lòng kiểm tra đường dẫn tệp.")
+        except pd.errors.ParserError:
+            messagebox.showerror("Lỗi", "Lỗi khi phân tích tệp CSV. Vui lòng kiểm tra dữ liệu.")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
