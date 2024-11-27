@@ -6,11 +6,9 @@ class DataAnalyzer:
         """
         Lớp quản lý dữ liệu từ file CSV.
         """
-<<<<<<< HEAD
-        self.file_path = "D:\PYTHON(project)\Python-project\project\data\data_clean.csv"
-=======
+
         self.file_path = "./data/data_clean.csv"
->>>>>>> 86df127f917eb5f871e9b6be3e6e15e5fcf94c03
+
         self.data = pd.read_csv(self.file_path)
 
     def filter_data_root(self, date):
