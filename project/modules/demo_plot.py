@@ -81,63 +81,62 @@ class ChartPlotter:
                 messagebox.showerror("Lỗi", "Tệp CSV không chứa dữ liệu.")
                 return
 
-            # Tính tổng số ca theo quốc gia
-            cases_by_country = df.groupby('Country')['New_cases'].sum()
+            # Tính tổng số ca tử vong mới theo quốc gia
+            deaths_by_country = df.groupby('Country')['New_deaths'].sum()
 
             # Sắp xếp dữ liệu từ lớn đến nhỏ
-            cases_by_country = cases_by_country.sort_values(ascending=False)
+            deaths_by_country = deaths_by_country.sort_values(ascending=False)
 
             # Tính tỉ lệ phần trăm cho từng quốc gia
-            percentages = (cases_by_country / cases_by_country.sum()) * 100
+            percentages = (deaths_by_country / deaths_by_country.sum()) * 100
 
-            # Tính tổng số ca cho các quốc gia có tỉ lệ < 2%
-            other_cases = cases_by_country[percentages < 2].sum()
+            # Tính tổng số ca tử vong cho các quốc gia có tỉ lệ < 2%
+            other_deaths = deaths_by_country[percentages < 2].sum()
 
             # Lọc ra các quốc gia có tỉ lệ >= 2%
-            cases_by_country = cases_by_country[percentages >= 2]
+            deaths_by_country = deaths_by_country[percentages >= 2]
             percentages = percentages[percentages >= 2]
 
-            if (other_cases > 0):
+            if other_deaths > 0:
                 # Thêm một mục "OTHER" cho các quốc gia có tỉ lệ < 2%
-                cases_by_country = pd.concat([cases_by_country, pd.Series(other_cases, index=["OTHER"])])
+                deaths_by_country = pd.concat([deaths_by_country, pd.Series(other_deaths, index=["OTHER"])])
                 percentages = pd.concat([percentages, pd.Series(100 - percentages.sum(), index=["OTHER"])])
-            
+
             # Tạo biểu đồ tròn
             fig, ax = plt.subplots(figsize=(1, 1))
             ax.set_position([0, 0.1, 0.6, 0.6])
 
             wedges, texts = ax.pie(
-                cases_by_country,
+                deaths_by_country,
                 labels=None,  # Không thêm nhãn trực tiếp vào biểu đồ
                 startangle=90,
                 colors=plt.cm.tab20.colors
             )
-            
+
             # Thêm chú thích ngoài biểu đồ
             ax.legend(
                 wedges,
-                [f"{country}: {percentage:.2f}% ({int(cases):,} cases)" 
-                for country, percentage, cases in zip(cases_by_country.index, percentages, cases_by_country)],
+                [f"{country}: {percentage:.2f}% ({int(deaths):,} deaths)"
+                 for country, percentage, deaths in zip(deaths_by_country.index, percentages, deaths_by_country)],
                 title="Quốc gia",
                 loc="center left",
-                bbox_to_anchor=(0.9, 0, 0.4 , 1)
+                bbox_to_anchor=(0.9, 0, 0.4, 1)
             )
-
-            # Thiết lập tiêu đề và cân bằng biểu đồ
-            ax.set_title("Số ca nhiễm mới trên thế giới", fontsize=14, pad=0)
+            # Thiết lập tiêu đề 
+            ax.set_title("Tỷ lệ số ca tử vong mới do COVID-19", fontsize=14, pad=0)
             plt.tight_layout()
 
             # Nhúng biểu đồ vào Tkinter
             canvas = FigureCanvasTkAgg(fig, master=master_frame)
             canvas.draw()
             canvas.get_tk_widget().pack(expand=True, fill='both')
-
         except FileNotFoundError:
             messagebox.showerror("Lỗi", "Không tìm thấy tệp dữ liệu. Vui lòng kiểm tra đường dẫn tệp.")
         except pd.errors.ParserError:
             messagebox.showerror("Lỗi", "Lỗi khi phân tích tệp CSV. Vui lòng kiểm tra dữ liệu.")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
+
 
             
     def plot_chart(self, master_frame):
@@ -178,13 +177,13 @@ class ChartPlotter:
 
             # Định dạng biểu đồ
             ax.set_title("Top 5 Quốc Gia Có Số Ca Tử Vong Cao Nhất Theo Thời Gian", fontsize=16)
-            ax.set_xlabel("Ngày Báo Cáo", fontsize=12)
+            ax.set_xlabel("Ngày", fontsize=12)
             ax.set_ylabel("Số Ca Tử Vong", fontsize=12)
             ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))  # Hiển thị tháng cách nhau 2
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
             ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{int(x):,}'))
             plt.xticks(rotation=45, ha='right')
-            ax.legend(title="Quốc Gia", loc='upper left', fontsize=10)
+            ax.legend(title="Quốc Gia", loc='upper right', fontsize=10)
             plt.grid(alpha=0.3)
 
             # Điều chỉnh bố cục
@@ -207,11 +206,10 @@ class ChartPlotter:
             df = self.data
             df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d', errors='coerce')
             
-
             recovery_by_date = df.groupby('Date_reported')['Total_recovery'].sum().reset_index()
             
             fig, ax = plt.subplots(figsize=(12, 6))
-            ax.plot(recovery_by_date['Date_reported'], recovery_by_date['Total_recovery'], linestyle='-', linewidth=2, markersize=4)
+            ax.bar(recovery_by_date['Date_reported'], recovery_by_date['Total_recovery'], width=3)
             
             # Định dạng biểu đồ
             ax.set_title('Tổng Số Ca Hồi Phục COVID-19', fontsize=14)

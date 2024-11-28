@@ -164,7 +164,7 @@ class App:
         self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
         self.chart_type_label.pack(pady=10)
 
-        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới", "Biểu đồ tròn về số ca mắc mới", "Biểu đồ đường về top 5 quốc gia có nhiều ca mất nhất", "Biểu đồ đường về số ca hồi phục"], state="readonly", width=50)
+        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới", "Biểu đồ tròn về số ca tử vong mới", "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất", "Biểu đồ đường về số ca hồi phục"], state="readonly", width=50)
         self.chart_type_combobox.pack(pady=5)
 
         self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command= self.chart_selection)
@@ -249,7 +249,7 @@ class App:
         if not chart_type:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn kiểu biểu đồ.")
             return
-        if not country and chart_type != "Biểu đồ tròn về số ca mắc mới" and chart_type != "Biểu đồ đường về top 5 quốc gia có nhiều ca mất nhất" and chart_type != "Biểu đồ đường về số ca hồi phục":  
+        if not country and chart_type != "Biểu đồ tròn về số ca tử vong mới" and chart_type != "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất" and chart_type != "Biểu đồ đường về số ca hồi phục":  
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
             return
 
@@ -260,9 +260,9 @@ class App:
         chart = ChartPlotter(self.treeview_table.filter_data_tree)
         if chart_type == "Biểu đồ cột về số ca mắc mới":
             chart.bar_chart(self.display_frame, country)
-        elif chart_type == "Biểu đồ tròn về số ca mắc mới":
+        elif chart_type == "Biểu đồ tròn về số ca tử vong mới":
             chart.pie_chart(self.display_frame)
-        elif chart_type == "Biểu đồ đường về top 5 quốc gia có nhiều ca mất nhất":
+        elif chart_type == "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất":
             chart.plot_chart(self.display_frame)
         elif chart_type == "Biểu đồ đường về số ca hồi phục":
             chart.plot_total_recovery(self.display_frame)
@@ -286,7 +286,7 @@ class App:
         self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
         self.chart_type_label.pack(pady=10)
 
-        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới", "Biểu đồ tròn về số ca mắc mới", "Biểu đồ đường về top 5 quốc gia có nhiều ca mất nhất", "Biểu đồ đường về số ca hồi phục"], state="readonly", width=50)
+        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới", "Biểu đồ tròn về số ca tử vong mới", "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất", "Biểu đồ đường về số ca hồi phục"], state="readonly", width=50)
         self.chart_type_combobox.pack(pady=5)
 
         self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command= self.chart_selection)
