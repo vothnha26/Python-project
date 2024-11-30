@@ -206,15 +206,15 @@ class ChartPlotter:
             df = self.data
             df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d', errors='coerce')
             
-            recovery_by_date = df.groupby('Date_reported')['Total_recovery'].sum().reset_index()
+            recovery_by_date = df.groupby('Date_reported')['Total_alive'].sum().reset_index()
             
             fig, ax = plt.subplots(figsize=(12, 6))
-            ax.bar(recovery_by_date['Date_reported'], recovery_by_date['Total_recovery'], width=3)
+            ax.bar(recovery_by_date['Date_reported'], recovery_by_date['Total_alive'], width=3)
             
             # Định dạng biểu đồ
-            ax.set_title('Tổng Số Ca Hồi Phục COVID-19', fontsize=14)
+            ax.set_title('Tổng Số Ca đã/ đang điều trị COVID-19', fontsize=14)
             ax.set_xlabel('Ngày', fontsize=12)
-            ax.set_ylabel('Số Ca Hồi Phục', fontsize=12)
+            ax.set_ylabel('Số Ca đã/ đang Điều Trị', fontsize=12)
             ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))  # Hiển thị tháng cách nhau 2
             ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
             ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{int(x):,}'))

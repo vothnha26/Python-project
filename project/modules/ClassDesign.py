@@ -7,10 +7,10 @@ class DataAnalyzer:
         """
         Lớp quản lý dữ liệu từ file CSV.
         """
-        self.file_path = "D:\PYTHON(project)\Python-project\project/data/data_clean.csv"
+        self.file_path = "./data/data_clean.csv"
 
         self.data = pd.read_csv(self.file_path)
-        self.data['Total_recovery'] = self.data['Cumulative_cases'].astype(int) - self.data['Cumulative_deaths'].astype(
+        self.data['Total_alive'] = self.data['Cumulative_cases'].astype(int) - self.data['Cumulative_deaths'].astype(
             int)
 
     def filter_data_root(self, date):

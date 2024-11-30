@@ -66,7 +66,9 @@ class CRUD:
             cases = cases_entry.get().strip()
             deaths = deaths_entry.get().strip()
             date_str = date_entry.get().strip()
-
+            if int(cases_entry.get()) < 0 or int(deaths_entry.get()) < 0:
+                messagebox.showerror("Lỗi", "Không được nhập số âm!!")
+                return
             if not country or not cases or not deaths or not date_str:
                 messagebox.showinfo("Lỗi", "Vui lòng nhập đầy đủ thông tin.")
                 return
@@ -179,7 +181,8 @@ class CRUD:
 
         # Nút Lưu
         def update_command():
-            treeview_table.save_updated_data(no, cases_entry, deaths_entry, date_entry, country, popup, country_code,
+            treeview_table.save_updated_data(no, date_reported, cases_entry, deaths_entry, date_entry, country, popup,
+                                             country_code,
                                              who_region)
 
         save_button = tk.Button(popup, text="Lưu", command=update_command, bg="#00796b", fg="white",
@@ -233,7 +236,7 @@ class CRUD:
 
             # Xóa các hàng trong TreeView
             treeview_table.delete_selected()
-
+            treeview_table.filter_data_tree=df
             # Cập nhật lại TreeView với dữ liệu mới
             treeview_table.display_treeview()
 

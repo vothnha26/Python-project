@@ -63,7 +63,7 @@ class BaseTreeView:
 
     def display_treeview(self):
         
-        self.filter_data_tree['Total_recovery'] = self.filter_data_tree['Cumulative_cases'].astype(int) - self.filter_data_tree['Cumulative_deaths'].astype(int)
+        self.filter_data_tree['Total_alive'] = self.filter_data_tree['Cumulative_cases'].astype(int) - self.filter_data_tree['Cumulative_deaths'].astype(int)
         
         self.update_total_pages()
         self.update_page_label()
@@ -121,6 +121,7 @@ class BaseTreeView:
 
         if len(option_area) == 0:
             option_area = ['AMRO', 'WPRO', 'EURO', 'SEARO', 'AFRO', 'EMRO', 'OTHER']
+
         """"Bộ lọc toàn bộ trang"""
         self.current_page = 0
         compare = lambda x, y: x.isin(y)
@@ -181,15 +182,33 @@ class BaseTreeView:
                 self.filter_data_tree.drop(self.filter_data_tree.index[row_index], inplace=True)
                 self.tree.delete(item)  # Xóa item khỏi TreeView
 
-    def save_updated_data(self, no=None, cases_entry=None, deaths_entry=None, date_entry=None, country=None, popup=None,
+    def save_updated_data(self, no=None, date_reported=None, cases_entry=None, deaths_entry=None, date_entry=None, country=None, popup=None,
                           country_code=None, who_region=None):
         """Cập nhật dữ liệu vào CSV và TreeView."""
+        if int(cases_entry.get().strip()) < 0 or int(deaths_entry.get().strip()) < 0:
+            messagebox.showerror("Lỗi", "Không được nhập số âm!!")
+            return
         try:
             # Lấy thông tin từ giao diện người dùng
             new_cases = int(cases_entry.get().strip())
             new_deaths = int(deaths_entry.get().strip())
             date = pd.to_datetime(date_entry.get().strip()).strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày (YYYY-MM-DD)
+            original_date = pd.to_datetime(date_reported).strftime('%Y-%m-%d')  # Ngày gốc
 
+            def check_date_conflict(country_name, new_date):
+                country_data = self.filter_data_tree[self.filter_data_tree['Country'] == country_name]
+                if not country_data.empty:
+                    country_data['Date_reported'] = pd.to_datetime(country_data['Date_reported']).dt.strftime(
+                        '%Y-%m-%d')
+                    return new_date in country_data['Date_reported'].values  # Trả về True nếu ngày tồn tại
+                return False
+
+            if date == original_date:
+                pass
+            else:
+                if check_date_conflict(country, date):
+                    messagebox.showerror("Lỗi", "Ngày này đã tồn tại trong dữ liệu của quốc gia!")
+                    return
             # Kiểm tra nếu DataFrame rỗng
             if self.filter_data_tree.empty:
                 messagebox.showerror("Lỗi", "Không có dữ liệu trong bảng để cập nhật.")
@@ -204,10 +223,8 @@ class BaseTreeView:
                 return
 
             # Cập nhật dữ liệu mới
-            df.loc[
-                (df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
-            df.loc[(df['Country'].str.strip() == country.strip()) & (
-                    df['Date_reported'] == date), 'New_deaths'] = new_deaths
+            df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
+            df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_deaths'] = new_deaths
 
             # Sắp xếp dữ liệu theo ngày và tính lại các giá trị tích lũy
             df['Date_reported'] = pd.to_datetime(df['Date_reported']).dt.strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày
@@ -222,6 +239,7 @@ class BaseTreeView:
             updated_row = df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date)]
             total_of_case = updated_row['Cumulative_cases'].iloc[0]
             total_of_death = updated_row['Cumulative_deaths'].iloc[0]
+
 
             # Lưu dữ liệu vào CSV
             data_save = DataAnalyzer().data

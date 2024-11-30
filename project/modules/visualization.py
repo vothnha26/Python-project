@@ -5,7 +5,6 @@ from tkinter import *
 from modules.ClassDesign import DataAnalyzer
 from modules.treeview_task import TreeViewTable
 from modules.demo_plot import ChartPlotter
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from modules.crud import CRUD
 from tkcalendar import Calendar
 
@@ -18,7 +17,7 @@ class App:
         master.configure(bg="#d1f0f7")
         self.data_path = data_path
 
-        self.title_label = tk.Label(master, text="Bảng phân tích dữ liệu số ca nhiễm COVID trên toàn thế giới",
+        self.title_label = tk.Label(master, text="BẢNG THỐNG KÊ DỮ LIỆU SỐ CA NHIỄM COVID TRÊN TOÀN THẾ GIỚI",
                                     font=("Helvetica", 14, "bold"), bg="#d1f0f7", fg="black")
         self.title_label.pack(pady=10)
 
@@ -85,19 +84,25 @@ class App:
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
 
-        # TEST -----
-        self.treeview_table = TreeViewTable(self.button_frame,file_path=self.data_path)
+        self.treeview_table = TreeViewTable(self.button_frame, file_path=self.data_path)
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
         entry = Entry(self.button_frame)
         entry.place(x=455, y=427)
 
-        def on_enter_key(event):
-            self.treeview_table.current_page = int(entry.get()) - 1 if entry.get() != '' else 0
-            self.treeview_table.display_treeview()
+        def to_page(event):
+            try:
+                page = int(entry.get())
+                if 0 < page <= self.treeview_table.total_pages:
+                    self.treeview_table.current_page = page - 1 if entry.get() != '' else 0
+                    self.treeview_table.display_treeview()
+                else:
+                    messagebox.showinfo("Lỗi", "Vui lòng nhập lại")
+            except Exception as e:
+                messagebox.showerror("Lỗi", f"{e}")
 
-        entry.bind("<Return>", on_enter_key)
+        entry.bind("<Return>", to_page)
 
         def search_command():
             popup = tk.Toplevel()
@@ -150,24 +155,26 @@ class App:
         self.b2 = tk.Button(self.button_frame, text="Dữ liệu theo ngày", command=self.show_tree_view_filter)
         self.b2.place(x=20, y=40)
 
-        self.cal = Calendar(self.display_frame, selectmode="day", year=2020, month=1, day=5)
+        self.cal = Calendar(self.main_frame, selectmode="day", year=2020, month=1, day=5)
         self.cal.bind("<<CalendarSelected>>", self.show_tree_view_filter)
-        # --------
 
         # Input và nút vẽ biểu đồ
 
-        
-
         self.input_country = tk.Entry(self.display_frame, width=30)
         self.input_country.pack(pady=5)
-        #Combobox
-        self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
+        # Combobox
+        self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12),
+                                         bg="#ffffff")
         self.chart_type_label.pack(pady=10)
 
-        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới", "Biểu đồ tròn về số ca tử vong mới", "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất", "Biểu đồ đường về số ca hồi phục"], state="readonly", width=50)
+        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới",
+                                                                            "Biểu đồ tròn về số ca tử vong mới",
+                                                                            "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất",
+                                                                            "Biểu đồ đường về số lượng đã/ đang điều trị"],
+                                                state="readonly", width=50)
         self.chart_type_combobox.pack(pady=5)
 
-        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command= self.chart_selection)
+        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command=self.chart_selection)
         self.plot_button.pack(pady=5)
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
@@ -179,13 +186,13 @@ class App:
 
         # Cập nhật trạng thái bảng
         self.treeview_table.cal_status = False
-        self.treeview_table.filter_data_tree = DataAnalyzer(self.data_path).data
+        self.treeview_table.filter_data_tree = DataAnalyzer().data
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 
     # Hiển thị dữ liệu đã lọc theo ngày
     def show_tree_view_filter(self, event=None):
-        self.cal.place(x=0, y=0)
+        self.cal.place(x=600, y=50)
         # Tách tháng, ngày, năm
         month, day, year = map(str, self.cal.get_date().split("/"))
         year = int(year)
@@ -241,7 +248,6 @@ class App:
                                   bg="#00796b", fg="white", font=("Helvetica", 12))
         filter_button.grid(row=4, columnspan=7, pady=10)
 
-    
     def chart_selection(self):
         chart_type = self.chart_type_combobox.get()  # Lấy giá trị từ Combobox
         country = self.input_country.get().strip()
@@ -249,13 +255,12 @@ class App:
         if not chart_type:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn kiểu biểu đồ.")
             return
-        if not country and chart_type != "Biểu đồ tròn về số ca tử vong mới" and chart_type != "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất" and chart_type != "Biểu đồ đường về số ca hồi phục":  
+        if not country and chart_type != "Biểu đồ tròn về số ca tử vong mới" and chart_type != "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất" and chart_type != "Biểu đồ đường về số ca đã/ đang điều trị":
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
             return
 
         # Chuẩn hóa tên quốc gia
         country = " ".join([word.capitalize() for word in country.split()])
-
 
         chart = ChartPlotter(self.treeview_table.filter_data_tree)
         if chart_type == "Biểu đồ cột về số ca mắc mới":
@@ -264,7 +269,7 @@ class App:
             chart.pie_chart(self.display_frame)
         elif chart_type == "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất":
             chart.plot_chart(self.display_frame)
-        elif chart_type == "Biểu đồ đường về số ca hồi phục":
+        elif chart_type == "Biểu đồ đường về số ca đã/ đang điều trị":
             chart.plot_total_recovery(self.display_frame)
 
     def reset_chart(self):
@@ -281,15 +286,20 @@ class App:
 
         self.input_country = tk.Entry(self.display_frame, width=30)
         self.input_country.pack(pady=5)
-        
-        #combobox
-        self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12), bg="#ffffff")
+
+        # combobox
+        self.chart_type_label = tk.Label(self.display_frame, text="Chọn kiểu biểu đồ", font=("Helvetica", 12),
+                                         bg="#ffffff")
         self.chart_type_label.pack(pady=10)
 
-        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới", "Biểu đồ tròn về số ca tử vong mới", "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất", "Biểu đồ đường về số ca hồi phục"], state="readonly", width=50)
+        self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới",
+                                                                            "Biểu đồ tròn về số ca tử vong mới",
+                                                                            "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất",
+                                                                            "Biểu đồ đường về số ca đã/ đang điều trị"],
+                                                state="readonly", width=50)
         self.chart_type_combobox.pack(pady=5)
 
-        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command= self.chart_selection)
+        self.plot_button = ttk.Button(self.display_frame, text="Vẽ biểu đồ", command=self.chart_selection)
         self.plot_button.pack(pady=5)
 
         self.reset_button = ttk.Button(self.display_frame, text="Reset", command=self.reset_chart)
