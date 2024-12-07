@@ -84,7 +84,7 @@ class App:
                                       bg="#ffffff", fg="black")
         self.display_label.pack(pady=10)
 
-        self.treeview_table = TreeViewTable(self.button_frame, file_path=self.data_path)
+        self.treeview_table = TreeViewTable(self.button_frame)
         self.treeview_table.display_treeview()
         self.treeview_table.update_page_label()
 

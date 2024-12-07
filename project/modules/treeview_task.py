@@ -1,5 +1,7 @@
 import copy
-from tkinter import ttk, messagebox
+from tkinter import ttk, messagebox, Message
+
+from modules import ClassDesign
 from modules.ClassDesign import DataAnalyzer
 import pandas as pd
 
@@ -62,16 +64,17 @@ class BaseTreeView:
         self.reset_button.place(x=290, y=680)
 
     def display_treeview(self):
-        
-        self.filter_data_tree['Total_alive'] = self.filter_data_tree['Cumulative_cases'].astype(int) - self.filter_data_tree['Cumulative_deaths'].astype(int)
-        
+
+        self.filter_data_tree['Total_alive'] = self.filter_data_tree['Cumulative_cases'].astype(int) - \
+                                               self.filter_data_tree['Cumulative_deaths'].astype(int)
+
         self.update_total_pages()
         self.update_page_label()
         """Hiển thị dữ liệu lên Treeview theo trang, bao gồm cột thứ tự."""
         self.tree.delete(*self.tree.get_children())  # Xóa dữ liệu cũ
         start = self.current_page * ROWS_PER_PAGE
         end = start + ROWS_PER_PAGE
-        
+
         for i, (_, row) in enumerate(self.filter_data_tree.iloc[start:end].iterrows(), start=1):
             self.tree.insert("", "end", values=[start + i] + list(row))
 
@@ -102,7 +105,7 @@ class BaseTreeView:
 
     def filter_tree(self, filter_area: dict, filter_year: dict):
         self.current_page = 0
-        # Khởi tạo các danh sách khu vực và thời gian đã được tick tại checkbutton
+        """Khởi tạo các danh sách khu vực và thời gian đã được tick tại checkbutton"""
         option_area = []
         option_year = []
         for area, var in filter_area.items():
@@ -114,6 +117,7 @@ class BaseTreeView:
                 option_year.append(year)
 
         if len(option_area) + len(option_year) == 0:
+            messagebox.showinfo("Thông báo", "Không có thông tin để lọc")
             return
 
         if len(option_year) == 0:
@@ -139,30 +143,39 @@ class BaseTreeView:
         self.display_treeview()
 
     def search_country_tree(self, country_name: str, date: str):
+        # loại bỏ khoảng trắng thừa
+        date = date.strip()
+        country_name = country_name.strip()
         self.current_page = 0
         """Tìm kiếm và hiển thị kết quả trong Treeview."""
 
         if country_name == '' and date == '':
+            messagebox.showinfo("Cảnh báo", "Vui lòng không bỏ trống các ô!")
             return
+
+        if date != '':
+            if not ClassDesign.DataAnalyzer.is_valid_date(date):
+                messagebox.showerror("Cảnh báo","Lỗi định dạng ngày, vui lòng điền lại")
+                return
+
+            self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
 
         if country_name == '':
             self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
+        else:
+            # Tìm chuỗi con trong Country
+            def country_matches(row):
+                n = len(row["Country"])
+                m = len(country_name)
 
-        # Tìm chuỗi con trong Country
-        def country_matches(row):
-            n = len(row["Country"])
-            m = len(country_name)
+                for i in range(n - m + 1):
+                    if row["Country"][i:i + m].lower() == country_name.lower():
+                        return True
 
-            for i in range(n - m + 1):
-                if row["Country"][i:i + m] == country_name:
-                    return True
+                return False
 
-            return False
+            self.filter_data_tree = self.filter_data_tree[self.filter_data_tree.apply(country_matches, axis=1)]
 
-        self.filter_data_tree = self.filter_data_tree[self.filter_data_tree.apply(country_matches, axis=1)]
-
-        if date != '':
-            self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
         self.display_treeview()
 
     def restore_data_root(self):
@@ -182,7 +195,8 @@ class BaseTreeView:
                 self.filter_data_tree.drop(self.filter_data_tree.index[row_index], inplace=True)
                 self.tree.delete(item)  # Xóa item khỏi TreeView
 
-    def save_updated_data(self, no=None, date_reported=None, cases_entry=None, deaths_entry=None, date_entry=None, country=None, popup=None,
+    def save_updated_data(self, no=None, date_reported=None, cases_entry=None, deaths_entry=None, date_entry=None,
+                          country=None, popup=None,
                           country_code=None, who_region=None):
         """Cập nhật dữ liệu vào CSV và TreeView."""
         if int(cases_entry.get().strip()) < 0 or int(deaths_entry.get().strip()) < 0:
@@ -223,8 +237,10 @@ class BaseTreeView:
                 return
 
             # Cập nhật dữ liệu mới
-            df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
-            df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_deaths'] = new_deaths
+            df.loc[
+                (df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
+            df.loc[(df['Country'].str.strip() == country.strip()) & (
+                        df['Date_reported'] == date), 'New_deaths'] = new_deaths
 
             # Sắp xếp dữ liệu theo ngày và tính lại các giá trị tích lũy
             df['Date_reported'] = pd.to_datetime(df['Date_reported']).dt.strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày
@@ -240,7 +256,6 @@ class BaseTreeView:
             total_of_case = updated_row['Cumulative_cases'].iloc[0]
             total_of_death = updated_row['Cumulative_deaths'].iloc[0]
 
-
             # Lưu dữ liệu vào CSV
             data_save = DataAnalyzer().data
             data_save[data_save['Country'].str.strip() == country.strip()] = df
@@ -254,7 +269,7 @@ class BaseTreeView:
             self.tree.item(selected_item, values=updated_row)  # Cập nhật số liệu mới cho hàng hiện tại
 
             # Cập nhật DataFrame nội bộ
-            self.filter_data_tree = DataAnalyzer().filter_data_root(self.date)
+            self.filter_data_tree = df if self.cal_status is False else DataAnalyzer().filter_data_root(self.date)
 
             self.display_treeview()
 
@@ -269,7 +284,7 @@ class BaseTreeView:
 
 
 class TreeViewTable(BaseTreeView):
-    def __init__(self, frame, file_path):
+    def __init__(self, frame):
         super().__init__(frame)
 
         # tạo các nút phân trang

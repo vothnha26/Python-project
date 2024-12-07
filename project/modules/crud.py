@@ -236,7 +236,8 @@ class CRUD:
 
             # Xóa các hàng trong TreeView
             treeview_table.delete_selected()
-            treeview_table.filter_data_tree=df
+            treeview_table.filter_data_tree = df if treeview_table.cal_status is False else DataAnalyzer().filter_data_root(
+                treeview_table.date)
             # Cập nhật lại TreeView với dữ liệu mới
             treeview_table.display_treeview()
 
