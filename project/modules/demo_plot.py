@@ -4,7 +4,7 @@ import matplotlib.dates as mdates
 from matplotlib.ticker import FuncFormatter, ScalarFormatter
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from tkinter import messagebox
-
+import numpy as np
 
 
 class ChartPlotter:
@@ -106,24 +106,30 @@ class ChartPlotter:
             fig, ax = plt.subplots(figsize=(1, 1))
             ax.set_position([0, 0.1, 0.6, 0.6])
 
+            
+
             wedges, texts = ax.pie(
                 deaths_by_country,
-                labels=None,  # Không thêm nhãn trực tiếp vào biểu đồ
+                labels = None,  # Không thêm nhãn trực tiếp vào biểu đồ
                 startangle=90,
                 colors=plt.cm.tab20.colors
             )
-
-            # Thêm chú thích ngoài biểu đồ
+            
+            labels = [
+                f"{country}: {percentage:.2f}% ({int(deaths):,} deaths)"
+                for country, percentage, deaths in zip(
+                    deaths_by_country.index, percentages, deaths_by_country
+                )
+            ]
+            # Thêm chú thích cho biểu đồ
             ax.legend(
                 wedges,
-                [f"{country}: {percentage:.2f}% ({int(deaths):,} deaths)"
-                 for country, percentage, deaths in zip(deaths_by_country.index, percentages, deaths_by_country)],
-                title="Quốc gia",
+                labels,
                 loc="center left",
-                bbox_to_anchor=(0.9, 0, 0.4, 1)
+                bbox_to_anchor=(1, 0, 1, 1)
             )
             # Thiết lập tiêu đề 
-            ax.set_title("Tỷ lệ số ca tử vong mới do COVID-19", fontsize=14, pad=0)
+            ax.set_title("Tỷ lệ số ca tử vong mới do COVID-19", fontsize=14)
             plt.tight_layout()
 
             # Nhúng biểu đồ vào Tkinter
@@ -204,21 +210,27 @@ class ChartPlotter:
     def plot_total_recovery(self, master_frame):
         try:
             df = self.data
-            df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d', errors='coerce')
+            if df.empty:
+                messagebox.showerror("Lỗi", "Tệp CSV không chứa dữ liệu.")
+                return
+            
+            df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d')
             
             recovery_by_date = df.groupby('Date_reported')['Total_alive'].sum().reset_index()
             
             fig, ax = plt.subplots(figsize=(12, 6))
-            ax.bar(recovery_by_date['Date_reported'], recovery_by_date['Total_alive'], width=3)
+            ax.bar(recovery_by_date['Date_reported'], recovery_by_date['Total_alive'], width=3, label='Tổng số ca hồi phục', color='green')
             
             # Định dạng biểu đồ
             ax.set_title('Tổng Số Ca đã/ đang điều trị COVID-19', fontsize=14)
             ax.set_xlabel('Ngày', fontsize=12)
             ax.set_ylabel('Số Ca đã/ đang Điều Trị', fontsize=12)
             ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))  # Hiển thị tháng cách nhau 2
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
-            ax.yaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{int(x):,}'))
-            ax.grid(True, linestyle='--', alpha=0.7)
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%m %Y'))
+            ax.yaxis.get_major_formatter().set_scientific(False)
+
+            ax.legend(loc='upper left')
+            ax.grid(True, linestyle='--')
             plt.xticks(rotation=45)
             plt.tight_layout()
 
@@ -232,3 +244,63 @@ class ChartPlotter:
             messagebox.showerror("Lỗi", "Lỗi khi phân tích tệp CSV. Vui lòng kiểm tra dữ liệu.")
         except Exception as e:
             messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
+    
+    
+    def line_chart(self, master_frame):
+        try:
+            df = self.data
+            if df.empty:
+                messagebox.showerror("Lỗi", "Tệp CSV không chứa dữ liệu.")
+                return
+            
+            # Chuyển đổi cột Date_reported sang datetime
+            df['Date_reported'] = pd.to_datetime(df['Date_reported'], format='%Y-%m-%d')
+            
+            # Lọc dữ liệu theo khoảng thời gian
+            start_date = '2021-02-01'
+            end_date = '2024-06-01'
+            filtered_time_df = df[
+                (df['Date_reported'] >= start_date) & (df['Date_reported'] <= end_date)
+            ]
+
+            # Tính tổng số ca tử vong tích lũy trong khoảng thời gian đã lọc
+            Cumulative_deaths_by_date = filtered_time_df.groupby('Date_reported')['Cumulative_deaths'].sum().reset_index()
+
+            # Tạo biểu đồ
+            fig, ax = plt.subplots(figsize=(12, 6))  
+            
+            # Vẽ biểu đồ
+            ax.plot(
+                Cumulative_deaths_by_date['Date_reported'], 
+                Cumulative_deaths_by_date['Cumulative_deaths'], 
+                "b", 
+                label='Tổng số ca tử vong tích lũy', color='brown', 
+                markersize=3,
+                markerfacecolor='red'
+            )
+
+            # Định dạng biểu đồ
+            ax.set_title('Số ca tử vong tích lũy', fontsize=14)
+            ax.set_xlabel('Ngày', fontsize=12)
+            ax.set_ylabel('Số ca', fontsize=12)
+            ax.xaxis.set_major_locator(mdates.MonthLocator(interval=2))
+            ax.xaxis.set_major_formatter(mdates.DateFormatter('%m %Y'))
+            ax.yaxis.get_major_formatter().set_scientific(False)
+            ax.legend(loc='upper left')
+            ax.grid(True, linestyle='--')
+            plt.xticks(rotation=45)
+            plt.tight_layout()
+
+            # Hiển thị biểu đồ trong Tkinter
+            canvas = FigureCanvasTkAgg(fig, master=master_frame)
+            canvas.draw()
+            canvas.get_tk_widget().pack(expand=True, fill='both')
+
+        except FileNotFoundError:
+            messagebox.showerror("Lỗi", "Không tìm thấy tệp dữ liệu. Vui lòng kiểm tra đường dẫn tệp.")
+        except pd.errors.ParserError:
+            messagebox.showerror("Lỗi", "Lỗi khi phân tích tệp CSV. Vui lòng kiểm tra dữ liệu.")
+        except Exception as e:
+            messagebox.showerror("Lỗi", f"Đã xảy ra lỗi: {e}")
+
+

@@ -4,7 +4,7 @@ import numpy as np
 def clean_data(input_file, output_file):
     # Đọc dữ liệu từ file CSV
     df = pd.read_csv(input_file, encoding="utf-8-sig")
-
+    print(df.isnull().sum())
     # Xử lý dữ liệu
     df["New_cases"] = df["New_cases"].fillna(0).astype(int)
     df["New_deaths"] = df["New_deaths"].fillna(0).astype(int)

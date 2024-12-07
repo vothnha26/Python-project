@@ -170,7 +170,8 @@ class App:
         self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới",
                                                                             "Biểu đồ tròn về số ca tử vong mới",
                                                                             "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất",
-                                                                            "Biểu đồ đường về số lượng đã/ đang điều trị"],
+                                                                            "Biểu đồ cột về số ca đã/ đang điều trị",
+                                                                            "Số ca tử vong tích lũy"],
                                                 state="readonly", width=50)
         self.chart_type_combobox.pack(pady=5)
 
@@ -255,7 +256,7 @@ class App:
         if not chart_type:
             messagebox.showwarning("Cảnh báo", "Vui lòng chọn kiểu biểu đồ.")
             return
-        if not country and chart_type != "Biểu đồ tròn về số ca tử vong mới" and chart_type != "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất" and chart_type != "Biểu đồ đường về số ca đã/ đang điều trị":
+        if not country and chart_type != "Biểu đồ tròn về số ca tử vong mới" and chart_type != "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất" and chart_type != "Biểu đồ cột về số ca đã/ đang điều trị" and chart_type != "Số ca tử vong tích lũy":
             messagebox.showwarning("Cảnh báo", "Vui lòng nhập tên quốc gia.")
             return
 
@@ -269,8 +270,10 @@ class App:
             chart.pie_chart(self.display_frame)
         elif chart_type == "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất":
             chart.plot_chart(self.display_frame)
-        elif chart_type == "Biểu đồ đường về số ca đã/ đang điều trị":
+        elif chart_type == "Biểu đồ cột về số ca đã/ đang điều trị":
             chart.plot_total_recovery(self.display_frame)
+        elif chart_type == "Số ca tử vong tích lũy":
+            chart.line_chart(self.display_frame)
 
     def reset_chart(self):
 
@@ -295,7 +298,8 @@ class App:
         self.chart_type_combobox = ttk.Combobox(self.display_frame, values=["Biểu đồ cột về số ca mắc mới",
                                                                             "Biểu đồ tròn về số ca tử vong mới",
                                                                             "Biểu đồ đường về top 5 quốc gia có nhiều ca tử vong nhất",
-                                                                            "Biểu đồ đường về số ca đã/ đang điều trị"],
+                                                                            "Biểu đồ cột về số ca đã/ đang điều trị",
+                                                                            "Số ca tử vong tích lũy"],
                                                 state="readonly", width=50)
         self.chart_type_combobox.pack(pady=5)
 
