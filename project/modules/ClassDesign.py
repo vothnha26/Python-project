@@ -1,5 +1,6 @@
 import pandas as pd
 import copy
+from datetime import datetime
 
 
 class DataAnalyzer:
@@ -16,3 +17,11 @@ class DataAnalyzer:
     def filter_data_root(self, date):
         data_root = copy.deepcopy(self.data)
         return data_root[data_root['Date_reported'] == date]
+
+    def is_valid_date(date_str: str):
+        """Kiểm tra ngày tháng có đúng định dạng YYYY-MM-DD hay không."""
+        try:
+            datetime.strptime(date_str, "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
