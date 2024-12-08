@@ -253,10 +253,14 @@ class BaseTreeView:
             df['Date_reported'] = pd.to_datetime(df['Date_reported']).dt.strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày
             country_df = df[df['Country'] == country].sort_values(by='Date_reported')
 
+            cumulative_cases = 0
+            cumulative_deaths = 0
+
             for idx, row in country_df.iterrows():
-                if row['Date_reported'] >= date:
-                    df.loc[idx, 'Cumulative_cases'] += new_cases
-                    df.loc[idx, 'Cumulative_deaths'] += new_deaths
+                cumulative_cases += row['New_cases']
+                cumulative_deaths += row['New_deaths']
+                df.loc[idx, 'Cumulative_cases'] = cumulative_cases
+                df.loc[idx, 'Cumulative_deaths'] = cumulative_deaths
 
             # Lấy tổng số ca và tử vong tích lũy tại ngày được cập nhật
             updated_row = df.loc[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date)]
