@@ -12,7 +12,7 @@ from tkcalendar import Calendar
 class App:
     def __init__(self, master, data_path):
         self.master = master
-        master.title("Project")
+        master.title("THỐNG KÊ DỮ LIỆU SỐ CA NHIỄM COVID")
         master.geometry("3000x900")
         master.configure(bg="#d1f0f7")
         self.data_path = data_path
