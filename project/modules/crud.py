@@ -67,12 +67,13 @@ class CRUD:
             deaths = deaths_entry.get().strip()
             date_str = date_entry.get().strip()
 
-            if int(cases_entry.get()) < 0 or int(deaths_entry.get()) < 0:
-                messagebox.showerror("Lỗi", "Không được nhập số âm!!")
-                return
             if not country or not cases or not deaths or not date_str:
                 messagebox.showinfo("Lỗi", "Vui lòng nhập đầy đủ thông tin.")
                 return
+            if int(cases_entry.get()) < 0 or int(deaths_entry.get()) < 0:
+                messagebox.showerror("Lỗi", "Không được nhập số âm!!")
+                return
+
 
             try:
                 cases = int(cases)
