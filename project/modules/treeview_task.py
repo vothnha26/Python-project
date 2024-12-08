@@ -229,6 +229,11 @@ class BaseTreeView:
                 return
 
             df = DataAnalyzer().data
+            # Tìm hàng cần cập nhật trong DataFrame (dựa trên 'no' hoặc country + date_reported)
+            index = df[(df['Country'] == country) & (df['Date_reported'] == date_reported)].index
+            df.loc[index, 'Date_reported'] = date  # Cập nhật ngày
+            df.to_csv(file_path, index=False)
+            df = DataAnalyzer().data
 
             # Kiểm tra hàng khớp điều kiện
             matching_rows = df[(df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date)]

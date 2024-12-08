@@ -66,6 +66,7 @@ class CRUD:
             cases = cases_entry.get().strip()
             deaths = deaths_entry.get().strip()
             date_str = date_entry.get().strip()
+
             if int(cases_entry.get()) < 0 or int(deaths_entry.get()) < 0:
                 messagebox.showerror("Lỗi", "Không được nhập số âm!!")
                 return
@@ -165,11 +166,13 @@ class CRUD:
         # Tạo các ô nhập liệu với giá trị hiện tại
         labels_entries = [
             ("Ngày báo cáo:", date_reported),
-            ("Tên nước:", country),
+            # ("Tên nước:", country),
             ("Số ca mắc mới:", new_cases),
             ("Số ca tử vong mới:", new_deaths),
         ]
         entries = []
+        tk.Label(popup, text="Tên nước:", bg="#f0f0f0").pack(pady=5)
+        tk.Label(popup, text=country, bg="#f0f0f0").pack(pady=5)
         for label_text, default_value in labels_entries:
             tk.Label(popup, text=label_text, bg="#f0f0f0").pack(pady=5)
             entry = tk.Entry(popup, width=30)
@@ -177,7 +180,7 @@ class CRUD:
             entry.pack(pady=5)
             entries.append(entry)
 
-        date_entry, country_entry, cases_entry, deaths_entry = entries
+        date_entry, cases_entry, deaths_entry = entries
 
         # Nút Lưu
         def update_command():
