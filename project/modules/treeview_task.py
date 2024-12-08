@@ -156,7 +156,7 @@ class BaseTreeView:
 
         if date != '':
             if not ClassDesign.DataAnalyzer.is_valid_date(date):
-                messagebox.showerror("Cảnh báo","Lỗi định dạng ngày, vui lòng điền lại")
+                messagebox.showerror("Cảnh báo", "Lỗi định dạng ngày, vui lòng điền lại")
                 return
 
             self.filter_data_tree = self.filter_data_tree[self.filter_data_tree["Date_reported"] == date]
@@ -201,9 +201,10 @@ class BaseTreeView:
                           country=None, popup=None,
                           country_code=None, who_region=None):
         """Cập nhật dữ liệu vào CSV và TreeView."""
-         if cases_entry.get().strip()=="" or deaths_entry.get().strip()=="" or date_entry.get().strip()=="":
+        if cases_entry.get().strip() == "" or deaths_entry.get().strip() == "" or date_entry.get().strip() == "":
             messagebox.showinfo("Lỗi", "Vui lòng nhập đầy đủ thông tin.")
             return
+
         if int(cases_entry.get().strip()) < 0 or int(deaths_entry.get().strip()) < 0:
             messagebox.showerror("Lỗi", "Không được nhập số âm!!")
             return
@@ -250,7 +251,7 @@ class BaseTreeView:
             df.loc[
                 (df['Country'].str.strip() == country.strip()) & (df['Date_reported'] == date), 'New_cases'] = new_cases
             df.loc[(df['Country'].str.strip() == country.strip()) & (
-                        df['Date_reported'] == date), 'New_deaths'] = new_deaths
+                    df['Date_reported'] == date), 'New_deaths'] = new_deaths
 
             # Sắp xếp dữ liệu theo ngày và tính lại các giá trị tích lũy
             df['Date_reported'] = pd.to_datetime(df['Date_reported']).dt.strftime('%Y-%m-%d')  # Đảm bảo chỉ có ngày
