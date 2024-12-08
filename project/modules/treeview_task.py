@@ -201,6 +201,9 @@ class BaseTreeView:
                           country=None, popup=None,
                           country_code=None, who_region=None):
         """Cập nhật dữ liệu vào CSV và TreeView."""
+         if cases_entry.get().strip()=="" or deaths_entry.get().strip()=="" or date_entry.get().strip()=="":
+            messagebox.showinfo("Lỗi", "Vui lòng nhập đầy đủ thông tin.")
+            return
         if int(cases_entry.get().strip()) < 0 or int(deaths_entry.get().strip()) < 0:
             messagebox.showerror("Lỗi", "Không được nhập số âm!!")
             return
