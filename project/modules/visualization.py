@@ -114,7 +114,7 @@ class App:
             title_label = tk.Label(popup, text="Tìm kiếm", font=("Helvetica", 14, "bold"), bg="#f0f0f0")
             title_label.pack(pady=10)
 
-            date_label = tk.Label(popup, text="Ngày tháng năm (YY-MM-DD):", bg="#f0f0f0")
+            date_label = tk.Label(popup, text="Ngày tháng năm (YYYY-MM-DD):", bg="#f0f0f0")
             date_label.pack(pady=5)
             date_entry = tk.Entry(popup, width=30)
             date_entry.pack(pady=5)
@@ -126,10 +126,12 @@ class App:
 
             # Nút lưu dữ liệu
             find_button = tk.Button(popup, text="Tìm kiếm",
-                                    command=lambda: self.treeview_table.search_country_tree(country_entry.get().strip(),
-                                                                                            date_entry.get().strip()),
+                                    command=lambda: self.treeview_table.search_country_tree(country_entry.get(),
+                                                                                            date_entry.get()),
                                     bg="#00796b", fg="white", font=("Helvetica", 12))
             find_button.pack(pady=10)
+            date_ex_label = tk.Label(popup,text="EX: 2020-01-05",font=("Helvetica", 14))
+            date_ex_label.pack()
 
         self.search_button.configure(command=search_command)
 

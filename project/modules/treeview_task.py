@@ -141,6 +141,7 @@ class BaseTreeView:
                 compare(self.filter_data_tree["WHO_region"], option_area)]
 
         self.display_treeview()
+        messagebox.showinfo('Thông tin', 'Trích lọc hoàn tất')
 
     def search_country_tree(self, country_name: str, date: str):
         # loại bỏ khoảng trắng thừa
@@ -177,6 +178,7 @@ class BaseTreeView:
             self.filter_data_tree = self.filter_data_tree[self.filter_data_tree.apply(country_matches, axis=1)]
 
         self.display_treeview()
+        messagebox.showinfo('Thông tin', 'Tìm kiếm hoàn tất')
 
     def restore_data_root(self):
         """"Trả về dữ liệu ban đầu."""
